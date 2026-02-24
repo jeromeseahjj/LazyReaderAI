@@ -2,6 +2,37 @@ type PagePayload = { title: string; url: string; text: string };
 
 const root = document.getElementById("app")!;
 
+function extractTopKeywords(text: string, topK = 8): string[] {
+  console.log(`[sidepanel] Recommendation - Entry`);
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+
+  const stop = new Set([
+    "the","a","an","and","or","but","if","then","else","to","of","in","on","for","with","as","at","by",
+    "is","are","was","were","be","been","being","it","this","that","these","those","from","into","than",
+    "you","your","we","our","they","their","i","me","my","he","she","his","her","them","there","here",
+    "about","also","more","most","some","such","may","might","can","could","would","should"
+  ]);
+
+  const tokens = cleaned
+    .toLowerCase()
+    .match(/[a-z0-9']+/g) ?? [];
+
+  const freq = new Map<string, number>();
+  for (const t of tokens) {
+    if (t.length <= 2) continue;
+    if (stop.has(t)) continue;
+    // ignore pure numbers to avoid "2025" dominating recommendations
+    if (/^\d+$/.test(t)) continue;
+    freq.set(t, (freq.get(t) ?? 0) + 1);
+  }
+
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topK)
+    .map(([w]) => w);
+}
+
 function summarizeExtractive(text: string, maxSentences = 5): string {
   const cleaned = text.replace(/\s+/g, " ").trim()
   if (!cleaned) return "";
@@ -65,6 +96,7 @@ function render(state: {
   summary?: string;
   recommendations?: string[];
 }) {
+  console.log("[Render] state:", state);
   root.innerHTML = `
     <div style="font-family: system-ui; padding: 12px; display:flex; flex-direction:column; gap:12px;">
       <div>
@@ -107,7 +139,23 @@ function render(state: {
   document.getElementById("btnSummarize")?.addEventListener("click", () => {
     const text = state.page?.text ?? "";
     const summary = summarizeExtractive(text, 5);
-    render({ ...state, summary: summary || "Could not summarize this page (not enough readable text)" });
+    const keywords = extractTopKeywords(text, 8);
+    
+    const recommendations = [
+      ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
+      ...(keywords.length >= 2 ? [`Try searching: "${keywords[0]} ${keywords[1]}"`] : []),
+      ...(keywords.length >= 3 ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`] : [])
+    ]
+
+    console.log("[Summarize] keywords:", keywords);
+    console.log("[Summarize] recommendations:", recommendations);
+
+    render({
+      ...state,
+      summary: summary || "Could not summarize this page (not enough readable text).",
+      recommendations
+    });
+    
   });
 }
 
