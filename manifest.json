@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Right Panel Page Summary",
+  "version": "0.1.0",
+  "description": "Shows what you're reading + a local summary in a right-side panel.",
+  "permissions": ["tabs", "sidePanel", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": { "default_title": "Open summary panel" },
+  "background": { "service_worker": "dist/background.js", "type": "module" },
+  "side_panel": { "default_path": "dist/index.html" }
+}
