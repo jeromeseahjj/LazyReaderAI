@@ -1,14 +1,14 @@
 {
-  "name": "webpage-summarizer",
+  "name": "lazyreaderai",
   "version": "1.0.0",
   "description": "Chrome extension to summarize anything",
-  "homepage": "https://github.com/jeromeseahjj/webpage-summarizer#readme",
+  "homepage": "https://github.com/jeromeseahjj/LazyReaderAI#readme",
   "bugs": {
-    "url": "https://github.com/jeromeseahjj/webpage-summarizer/issues"
+    "url": "https://github.com/jeromeseahjj/LazyReaderAI/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeromeseahjj/webpage-summarizer.git"
+    "url": "git+https://github.com/jeromeseahjj/LazyReaderAI.git"
   },
   "license": "ISC",
   "type": "module",
