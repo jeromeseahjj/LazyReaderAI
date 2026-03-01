@@ -169,7 +169,7 @@ async function load() {
     // Inject content script on demand
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["dist/content.js"]
+      files: ["content.js"]
     });
 
     const page = await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_TEXT" }) as PagePayload;
