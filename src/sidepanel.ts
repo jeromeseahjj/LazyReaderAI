@@ -1,187 +1,77 @@
-type PagePayload = { title: string; url: string; text: string };
+import type { AppState, PagePayload } from "./sidepanel/types";
+import { createStore } from "./sidepanel/store";
+import { mountShell } from "./sidepanel/shell";
+import { mountPreview } from "./sidepanel/modules/preview";
+import { mountSummary } from "./sidepanel/modules/summary";
 
 const root = document.getElementById("app")!;
+const store = createStore<AppState>({ loading: true });
 
-function extractTopKeywords(text: string, topK = 8): string[] {
-  console.log(`[sidepanel] Recommendation - Entry`);
-  const cleaned = text.replace(/\s+/g, " ").trim();
-  if (!cleaned) return [];
+const shell = mountShell(root);
+mountPreview(shell.previewEl, store, { titleEl: shell.titleEl, urlEl: shell.urlEl });
+const summary = mountSummary(shell.summaryEl, store);
 
-  const stop = new Set([
-    "the","a","an","and","or","but","if","then","else","to","of","in","on","for","with","as","at","by",
-    "is","are","was","were","be","been","being","it","this","that","these","those","from","into","than",
-    "you","your","we","our","they","their","i","me","my","he","she","his","her","them","there","here",
-    "about","also","more","most","some","such","may","might","can","could","would","should"
-  ]);
+// Recommendations module is lazy
+let recommendationsMod: null | { generateFrom: (text: string) => Promise<string[]> } = null;
 
-  const tokens = cleaned
-    .toLowerCase()
-    .match(/[a-z0-9']+/g) ?? [];
+let runId = 0;
 
-  const freq = new Map<string, number>();
-  for (const t of tokens) {
-    if (t.length <= 2) continue;
-    if (stop.has(t)) continue;
-    // ignore pure numbers to avoid "2025" dominating recommendations
-    if (/^\d+$/.test(t)) continue;
-    freq.set(t, (freq.get(t) ?? 0) + 1);
-  }
-
-  return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topK)
-    .map(([w]) => w);
-}
-
-function summarizeExtractive(text: string, maxSentences = 5): string {
-  const cleaned = text.replace(/\s+/g, " ").trim()
-  if (!cleaned) return "";
-
-  // Split into sentence
-  const sentences = cleaned
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length >= 40);
-
-  if (sentences.length === 0) return cleaned.slice(0, 500);
-
-  // Tokenize & build word frequency map
-  const stop = new Set([
-    "the","a","an","and","or","but","if","then","else","to","of","in","on","for","with","as","at","by",
-    "is","are","was","were","be","been","being","it","this","that","these","those","from","into","than",
-    "you","your","we","our","they","their","i","me","my","he","she","his","her","them","there","here"
-  ]);
-
-  // Old school NLP
-  const wordFreq = new Map<string, number>();
-  for (const s of sentences) {
-    for (const w of s.toLowerCase().match(/[a-z0-9']/g) ?? []) {
-      // Ignore redundant words
-      if (w.length <= 2) continue;
-      if (stop.has(w)) continue;
-      // Capture statistic and keywords
-      wordFreq.set(w, (wordFreq.get(w) ?? 0) + 1);
-    }
-  }
-
-  // Score sentences by sum of keyword frequencies, normalized by length
-  const scored = sentences.map((s, idx) => {
-    const words = s.toLowerCase().match(/[a-z0-9']+/g) ?? [];
-    let score = 0;
-    
-    // This gives statistic a boost/higher score
-    const hasNumber = /\d/.test(s);
-    if (hasNumber) score += 5;
-    for (const w of words) score += wordFreq.get(w) ?? 0;
-    const norm = Math.max(8, words.length);
-    // To prevent biasness from long sentences
-    return { idx, s, score: score / norm };
-  });
-
-  // b - a, is positive, means b is bigger, b should come before a
-  // if negative, means a should come before b
-  const picked = scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, Math.min(maxSentences, scored.length))
-    .sort((a, b) => a.idx - b.idx)
-    .map((x) => x.s)
-  
-  return picked.join("\n\n");
-}
-
-function render(state: {
-  loading: boolean;
-  page?: PagePayload;
-  error?: string;
-  summary?: string;
-  recommendations?: string[];
-}) {
-  console.log("[Render] state:", state);
-  root.innerHTML = `
-    <div style="font-family: system-ui; padding: 12px; display:flex; flex-direction:column; gap:12px;">
-      <div>
-        <div style="font-size:14px; opacity:.7;">Reading</div>
-        <div style="font-size:16px; font-weight:600;">${state.page?.title ?? ""}</div>
-        <div style="font-size:12px; opacity:.7; word-break:break-all;">${state.page?.url ?? ""}</div>
-      </div>
-
-      <div style="display:flex; gap:8px;">
-        <button id="btnRefresh">Refresh</button>
-        <button id="btnSummarize">Summarize (placeholder)</button>
-      </div>
-
-      <div>
-        <div style="font-size:14px; opacity:.7;">Page text (preview)</div>
-        <div style="white-space:pre-wrap; max-height:220px; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:8px;">
-          ${state.loading ? "Loading…" : (state.page?.text?.slice(0, 2000) ?? "")}
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:14px; opacity:.7;">Summary</div>
-        <div style="white-space:pre-wrap; border:1px solid #ddd; padding:8px; border-radius:8px; min-height:80px;">
-          ${state.summary ?? "Not generated yet."}
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:14px; opacity:.7;">Recommendations</div>
-        <ul>
-          ${(state.recommendations ?? ["(coming soon)"]).map(x => `<li>${x}</li>`).join("")}
-        </ul>
-      </div>
-
-      ${state.error ? `<div style="color:#b00020;">${state.error}</div>` : ""}
-    </div>
-  `;
-
-  document.getElementById("btnRefresh")?.addEventListener("click", () => load());
-  document.getElementById("btnSummarize")?.addEventListener("click", () => {
-    const text = state.page?.text ?? "";
-    const summary = summarizeExtractive(text, 5);
-    const keywords = extractTopKeywords(text, 8);
-    
-    const recommendations = [
-      ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
-      ...(keywords.length >= 2 ? [`Try searching: "${keywords[0]} ${keywords[1]}"`] : []),
-      ...(keywords.length >= 3 ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`] : [])
-    ]
-
-    console.log("[Summarize] keywords:", keywords);
-    console.log("[Summarize] recommendations:", recommendations);
-
-    render({
-      ...state,
-      summary: summary || "Could not summarize this page (not enough readable text).",
-      recommendations
-    });
-    
-  });
-}
-
-async function load() {
-  render({ loading: true });
-
-  try {
+async function fetchPage(): Promise<PagePayload> {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) throw new Error("No active tab");
 
-    // Inject content script on demand
     await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["content.js"]
+        target: { tabId: tab.id },
+        files: ["content.js"]
     });
 
-    const page = await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_TEXT" }) as PagePayload;
+    return (await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_TEXT" })) as PagePayload;
 
-    render({
-      loading: false,
-      page,
-      recommendations: []
-    });
-  } catch (e: any) {
-    render({ loading: false, error: e?.message ?? String(e) });
-  }
 }
+
+async function load() {
+    const myRun = ++runId;
+
+    store.set({ loading: true });
+    shell.errorEl.textContent = "";
+
+    try {
+        const page = await fetchPage();
+        if (myRun !== runId) return; // ignore stale results
+
+        store.set({ loading: false, page });
+
+        // Summary first (fast path)
+        await summary.generateFrom(page.text);
+        if (myRun !== runId) return;
+
+        // Recommendations later (lazy import + idle compute)
+        queueMicrotask(async () => {
+            if (myRun !== runId) return;
+
+            const { mountRecommendations } = await import("./sidepanel/modules/recommendations");
+            if (myRun !== runId) return;
+
+            if (!recommendationsMod) {
+                recommendationsMod = mountRecommendations(shell.recommendationsEl, store);
+            }
+            await recommendationsMod.generateFrom(page.text);
+        });
+
+    } catch (e: any) {
+        store.set({ loading: false, error: e?.message ?? String(e) });
+        shell.errorEl.textContent = e?.message ?? String(e);
+    }
+
+}
+
+// Wire buttons once (no re-render = no re-binding needed)
+shell.btnRefresh.addEventListener("click", load);
+
+shell.btnSummarize.addEventListener("click", async () => {
+    const text = store.get().page?.text ?? "";
+    if (!text) return;
+    await summary.generateFrom(text);
+});
 
 load();

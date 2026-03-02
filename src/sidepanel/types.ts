@@ -5,5 +5,5 @@ export type AppState = {
     page?: PagePayload;
     error?: string;
     summary?: string;
-    recommendations?: string;
+    recommendations?: string[];
 }
