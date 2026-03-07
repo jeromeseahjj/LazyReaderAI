@@ -4,6 +4,11 @@ export type ShellRefs = {
     urlEl: HTMLElement;
     btnRefresh: HTMLButtonElement;
     btnSummarize: HTMLButtonElement;
+    runtimeEl: HTMLElement;
+    backendEl: HTMLElement;
+    webgpuEl: HTMLElement;
+    transformersEl: HTMLElement;
+    notesEl: HTMLElement;
     previewEl: HTMLElement;
     summaryEl: HTMLElement;
     recommendationsEl: HTMLElement;
@@ -99,12 +104,32 @@ export function mountShell(root: HTMLElement): ShellRefs {
     recommendationsEl.style.borderRadius = "8px";
     recommendationsEl.textContent = "Recommendations will appear here.";
 
+    const runtimeEl = document.createElement("div");
+    runtimeEl.style.whiteSpace = "pre-wrap";
+    runtimeEl.style.border = "1px solid #ddd";
+    runtimeEl.style.padding = "8px";
+    runtimeEl.style.borderRadius = "8px";
+    runtimeEl.textContent = "Checking runtime...";
+
+    const backendEl = document.createElement("div");
+    const webgpuEl = document.createElement("div");
+    const transformersEl = document.createElement("div");
+    const notesEl = document.createElement("div");
+
+    runtimeEl.append(
+        backendEl,
+        webgpuEl,
+        transformersEl,
+        notesEl,
+    );
+
     const errorEl = document.createElement("div");
     errorEl.style.color = "#b00020";
 
     app.append(
         header,
         actions,
+        section("Runtime", runtimeEl),
         section("Page text (preview)", previewEl),
         section("Summary", summaryEl),
         section("Recommendations", recommendationsEl),
@@ -117,6 +142,11 @@ export function mountShell(root: HTMLElement): ShellRefs {
         urlEl,
         btnRefresh,
         btnSummarize,
+        runtimeEl,
+        backendEl,
+        webgpuEl,
+        transformersEl,
+        notesEl,
         previewEl,
         summaryEl,
         recommendationsEl,

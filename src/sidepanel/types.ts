@@ -5,5 +5,13 @@ export type AppState = {
     page?: PagePayload;
     error?: string;
     summary?: string;
+    runtime?: RuntimeStatus;
     recommendations?: string[];
 }
+
+export type RuntimeStatus = {
+    webgpuAvailable: boolean;
+    transformersReady: boolean;
+    backend: "webgpu" | "wasm";
+    notes: string[];
+};

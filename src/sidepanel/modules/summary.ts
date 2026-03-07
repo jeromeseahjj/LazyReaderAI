@@ -1,13 +1,14 @@
 import type { AppState } from "../types";
 import type { createStore } from "../store";
 import { summarizeExtractive } from "../nlp";
+import { escapeHtml } from "../../common/utils";
 
 type Store = ReturnType<typeof createStore<AppState>>;
 
 export function mountSummary(slot: HTMLElement, store: Store) {
     // render-only subscription (shows whatever store has)
     const unsub = store.subscribe((state) => {
-        slot.textContent = state.summary ?? "Not generated yet.";
+        slot.textContent = state.summary ?? "Not generated yet."
     });
 
     async function generateFrom(text: string) {

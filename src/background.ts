@@ -11,7 +11,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     // Ensure the side panel is enabled on the current tab.
     await chrome.sidePanel.setOptions({
         tabId: tab.id,
-        path: "dist/index.html",
+        path: "index.html",
         enabled: true
     });
 

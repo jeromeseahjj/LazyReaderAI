@@ -1,6 +1,7 @@
 import type { AppState } from "../types";
 import type { createStore } from "../store";
 import { extractTopKeywords } from "../nlp";
+import { escapeHtml } from "../../common/utils";
 
 type Store = ReturnType<typeof createStore<AppState>>;
 
@@ -33,7 +34,7 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
         }
         for (const x of items) {
             const li = document.createElement("li");
-            li.textContent = x;
+            li.textContent = x
             list.appendChild(li);
         }
     });

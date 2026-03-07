@@ -3,6 +3,8 @@ import { createStore } from "./sidepanel/store";
 import { mountShell } from "./sidepanel/shell";
 import { mountPreview } from "./sidepanel/modules/preview";
 import { mountSummary } from "./sidepanel/modules/summary";
+import { probeRuntime } from "./sidepanel/transformer";
+import { mountRuntime } from "./sidepanel/modules/runtime";
 
 const root = document.getElementById("app")!;
 const store = createStore<AppState>({ loading: true });
@@ -10,11 +12,26 @@ const store = createStore<AppState>({ loading: true });
 const shell = mountShell(root);
 mountPreview(shell.previewEl, store, { titleEl: shell.titleEl, urlEl: shell.urlEl });
 const summary = mountSummary(shell.summaryEl, store);
+mountRuntime(shell.runtimeEl, store, {
+    backendEl: shell.backendEl,
+    webgpuEl: shell.webgpuEl,
+    transformersEl: shell.transformersEl,
+    notesEl: shell.notesEl,
+});
 
 // Recommendations module is lazy
 let recommendationsMod: null | { generateFrom: (text: string) => Promise<string[]> } = null;
 
 let runId = 0;
+
+function escapeHtml(value: string): string {
+    return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
 
 async function fetchPage(): Promise<PagePayload> {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -36,10 +53,14 @@ async function load() {
     shell.errorEl.textContent = "";
 
     try {
-        const page = await fetchPage();
+        const [page, runtime] = await Promise.all([
+            fetchPage(),
+            probeRuntime()
+        ])
+
         if (myRun !== runId) return; // ignore stale results
 
-        store.set({ loading: false, page });
+        store.set({ loading: false, page, runtime });
 
         // Summary first (fast path)
         await summary.generateFrom(page.text);
