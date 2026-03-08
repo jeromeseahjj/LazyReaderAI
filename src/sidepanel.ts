@@ -5,7 +5,7 @@ import { mountPreview } from "./sidepanel/modules/preview";
 import { mountSummary } from "./sidepanel/modules/summary";
 import { probeRuntime } from "./sidepanel/transformer";
 import { mountRuntime } from "./sidepanel/modules/runtime";
-import { summarizeWithModel } from "./summarizer";
+import { summarizeLongText, summarizeWithModel } from "./summarizer";
 import { summarizeExtractive } from "./sidepanel/nlp";
 
 const root = document.getElementById("app")!;
@@ -126,7 +126,7 @@ shell.btnSummarize.addEventListener("click", async () => {
         summaryLoading: true
     });
     try {
-        const summary = await summarizeWithModel(text);
+        const summary = await summarizeLongText(text);
         store.set({
             summaryLoading: false,
             summary: summary || summarizeExtractive(text, 5)
