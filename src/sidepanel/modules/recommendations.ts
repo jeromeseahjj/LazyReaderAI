@@ -28,7 +28,7 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
         list.innerHTML = "";
         if (items.length === 0) {
             const li = document.createElement("li");
-            li.textContent = state.loading ? "Loading…" : "No recommendations yet.";
+            li.textContent = state.pageLoading ? "Loading…" : "No recommendations yet.";
             list.appendChild(li);
             return;
         }

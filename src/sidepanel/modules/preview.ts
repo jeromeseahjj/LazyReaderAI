@@ -9,7 +9,7 @@ export function mountPreview(slot: HTMLElement, store: Store, refs: { titleEl: H
         refs.titleEl.textContent = state.page?.title ?? ""
         refs.urlEl.textContent = state.page?.url ?? ""
 
-        if (state.loading) {
+        if (state.pageLoading) {
             slot.textContent = "Loading...";
             return;
         }

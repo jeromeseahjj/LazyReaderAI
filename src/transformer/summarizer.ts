@@ -3,12 +3,12 @@ import { env, pipeline } from "@huggingface/transformers";
 let summarizerPromise: Promise<any> | null = null;
 
 function configureTransformers() {
-    if (!env.backends?.onnx?.wasm) {
-        throw new Error("ONNX WASM backend is not available.");
+    const wasmBackend = env.backends?.onnx?.wasm;
+    if (!wasmBackend) {
+        throw new Error("ONNX WASM backend is not available");
     }
 
-    // Get the local copy that is bundled into the /dist instead of CDN
-    env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL("ort/");
+    wasmBackend.wasmPaths = "/ort/";
 }
 
 export async function getSummarizer() {

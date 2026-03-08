@@ -5,7 +5,6 @@ import { mountPreview } from "./sidepanel/modules/preview";
 import { mountSummary } from "./sidepanel/modules/summary";
 import { probeRuntime } from "./sidepanel/transformer";
 import { mountRuntime } from "./sidepanel/modules/runtime";
-import { summarizeLongText, summarizeWithModel } from "./summarizer";
 import { summarizeExtractive } from "./sidepanel/nlp";
 
 const root = document.getElementById("app")!;
@@ -122,21 +121,14 @@ shell.btnRefresh.addEventListener("click", load);
 shell.btnSummarize.addEventListener("click", async () => {
     const text = store.get().page?.text ?? "";
     if (!text.trim()) return;
-    store.set({
-        summaryLoading: true
-    });
     try {
-        const summary = await summarizeLongText(text);
-        store.set({
-            summaryLoading: false,
-            summary: summary || summarizeExtractive(text, 5)
-        })
+        await summary.generateFrom(text);
     } catch (error) {
         store.set({
             summaryLoading: false,
             summary: summarizeExtractive(text, 5),
             error: error instanceof Error ? error.message : String(error),
-        })
+        });
     }
 });
 
