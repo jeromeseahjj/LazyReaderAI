@@ -7,5 +7,14 @@
   "host_permissions": ["<all_urls>"],
   "action": { "default_title": "Open summary panel" },
   "background": { "service_worker": "background.js", "type": "module" },
-  "side_panel": { "default_path": "index.html" }
+  "side_panel": { "default_path": "index.html" },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["ort/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

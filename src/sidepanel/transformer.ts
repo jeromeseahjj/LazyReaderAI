@@ -1,5 +1,6 @@
 import type { RuntimeStatus } from "./types";
 
+
 export async function probeRuntime(): Promise<RuntimeStatus> {
     const notes: string[] = [];
     console.log("[transformer.probeRuntime] Navigator ", navigator);

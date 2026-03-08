@@ -8,7 +8,11 @@ type Store = ReturnType<typeof createStore<AppState>>;
 export function mountSummary(slot: HTMLElement, store: Store) {
     // render-only subscription (shows whatever store has)
     const unsub = store.subscribe((state) => {
-        slot.textContent = state.summary ?? "Not generated yet."
+        if (state.summaryLoading) {
+            slot.textContent = "Generating summary...";
+            return;
+        }
+        slot.textContent = state.summary ?? "Not generated yet.";
     });
 
     async function generateFrom(text: string) {

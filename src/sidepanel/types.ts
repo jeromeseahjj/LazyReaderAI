@@ -1,17 +1,20 @@
 export type PagePayload = { title: string; url: string; text: string };
 
 export type AppState = {
-    loading: boolean;
-    page?: PagePayload;
+    pageLoading: boolean;
+    summaryLoading: boolean;
     error?: string;
-    summary?: string;
+    page?: PagePayload;
     runtime?: RuntimeStatus;
-    recommendations?: string[];
-}
+    summary?: string;
+    recommendations: string[];
+};
 
 export type RuntimeStatus = {
     webgpuAvailable: boolean;
     transformersReady: boolean;
     backend: "webgpu" | "wasm";
     notes: string[];
+    modelReady?: boolean;
+    modelName?: string;
 };
