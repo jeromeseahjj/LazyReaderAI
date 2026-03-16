@@ -11,7 +11,7 @@ const root = document.getElementById("app")!;
 
 const store = createStore<AppState>({
     pageLoading: true,
-    summaryLoading: true,
+    summaryLoading: false,
     recommendations: [],
 });
 
@@ -66,7 +66,7 @@ async function load() {
 
     store.set({
         pageLoading: true,
-        summaryLoading: true,
+        summaryLoading: false,
         recommendations: [],
     });
     shell.errorEl.textContent = "";
