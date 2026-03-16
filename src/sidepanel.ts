@@ -6,6 +6,7 @@ import { mountSummary } from "./sidepanel/modules/summary";
 import { probeRuntime } from "./sidepanel/transformer";
 import { mountRuntime } from "./sidepanel/modules/runtime";
 import { summarizeExtractive } from "./sidepanel/nlp";
+import { createAppController } from "./sidepanel/controller";
 
 const root = document.getElementById("app")!;
 
@@ -26,6 +27,17 @@ mountRuntime(shell.runtimeEl, store, {
     webgpuEl: shell.webgpuEl,
     transformersEl: shell.transformersEl,
     notesEl: shell.notesEl,
+});
+
+const controller = createAppController({
+    store,
+    summary,
+    fetchPage,
+    probeRuntime,
+    getRecommendations: async () => {
+        const { mountRecommendations } = await import("./sidepanel/modules/recommendations");
+        return mountRecommendations(shell.recommendationsEl, store);
+    },
 });
 
 // Recommendations module is lazy
@@ -61,75 +73,67 @@ async function fetchPage(): Promise<PagePayload> {
     })) as PagePayload;
 }
 
-async function load() {
-    const myRun = ++runId;
+// async function load() {
+//     const myRun = ++runId;
 
-    store.set({
-        pageLoading: true,
-        summaryLoading: false,
-        recommendations: [],
-    });
-    shell.errorEl.textContent = "";
+//     store.set({
+//         pageLoading: true,
+//         summaryLoading: false,
+//         recommendations: [],
+//     });
+//     shell.errorEl.textContent = "";
 
-    try {
-        const [page, runtime] = await Promise.all([
-            fetchPage(),
-            probeRuntime(),
-        ]);
+//     try {
+//         const [page, runtime] = await Promise.all([
+//             fetchPage(),
+//             probeRuntime(),
+//         ]);
 
-        if (myRun !== runId) return; // ignore stale results
+//         if (myRun !== runId) return; // ignore stale results
 
-        store.set({ 
-            pageLoading: false,
-            summaryLoading: false,
-            page, 
-            runtime 
-        });
+//         store.set({ 
+//             pageLoading: false,
+//             summaryLoading: false,
+//             page, 
+//             runtime 
+//         });
 
-        // Summary first (fast path)
-        await summary.generateFrom(page.text);
-        if (myRun !== runId) return;
+//         // Summary first (fast path)
+//         await summary.generateFrom(page.text);
+//         if (myRun !== runId) return;
 
-        // Recommendations later (lazy import + idle compute)
-        queueMicrotask(async () => {
-            if (myRun !== runId) return;
+//         // Recommendations later (lazy import + idle compute)
+//         queueMicrotask(async () => {
+//             if (myRun !== runId) return;
 
-            const { mountRecommendations } =
-                await import("./sidepanel/modules/recommendations");
-            if (myRun !== runId) return;
+//             const { mountRecommendations } =
+//                 await import("./sidepanel/modules/recommendations");
+//             if (myRun !== runId) return;
 
-            if (!recommendationsMod) {
-                recommendationsMod = mountRecommendations(
-                    shell.recommendationsEl,
-                    store,
-                );
-            }
-            await recommendationsMod.generateFrom(page.text);
-        });
-    } catch (e: any) {
-        store.set({ 
-            pageLoading: false,
-            summaryLoading: false, 
-            error: e?.message ?? String(e) });
-        shell.errorEl.textContent = e?.message ?? String(e);
-    }
-}
+//             if (!recommendationsMod) {
+//                 recommendationsMod = mountRecommendations(
+//                     shell.recommendationsEl,
+//                     store,
+//                 );
+//             }
+//             await recommendationsMod.generateFrom(page.text);
+//         });
+//     } catch (e: any) {
+//         store.set({ 
+//             pageLoading: false,
+//             summaryLoading: false, 
+//             error: e?.message ?? String(e) });
+//         shell.errorEl.textContent = e?.message ?? String(e);
+//     }
+// }
 
 // Wire buttons once (no re-render = no re-binding needed)
-shell.btnRefresh.addEventListener("click", load);
-
-shell.btnSummarize.addEventListener("click", async () => {
-    const text = store.get().page?.text ?? "";
-    if (!text.trim()) return;
-    try {
-        await summary.generateFrom(text);
-    } catch (error) {
-        store.set({
-            summaryLoading: false,
-            summary: summarizeExtractive(text, 5),
-            error: error instanceof Error ? error.message : String(error),
-        });
-    }
+shell.btnRefresh.addEventListener("click", () => {
+    void controller.refresh();
 });
 
-load();
+shell.btnSummarize.addEventListener("click", async () => {
+    void controller.summarizeCurrentPage();
+});
+
+void controller.refresh();

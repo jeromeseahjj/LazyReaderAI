@@ -17,45 +17,57 @@ function runIdle(): Promise<void> {
 }
 
 export function mountRecommendations(slot: HTMLElement, store: Store) {
+    const statusEl = document.createElement("div");
+    statusEl.style.marginBottom = "8px";
+
     const list = document.createElement("ul");
     list.style.margin = "0";
     list.style.paddingLeft = "18px";
-    slot.innerHTML = "";
-    slot.appendChild(list);
+
+    slot.replaceChildren(statusEl, list);
 
     const unsub = store.subscribe((state) => {
         const items = state.recommendations ?? [];
         list.innerHTML = "";
         if (items.length === 0) {
             const li = document.createElement("li");
-            li.textContent = state.pageLoading ? "Loading…" : "No recommendations yet.";
+            li.textContent = state.pageLoading
+                ? "Loading…"
+                : "No recommendations yet.";
             list.appendChild(li);
             return;
         }
         for (const x of items) {
             const li = document.createElement("li");
-            li.textContent = x
+            li.textContent = x;
             list.appendChild(li);
         }
     });
 
     async function generateFrom(text: string) {
-        // Give Summary time to render, then do this when the browser is idle
         store.set({ recommendations: [] });
-        slot.prepend(document.createTextNode("Generating recommendations"));
-        await runIdle();
+        statusEl.textContent = "Generating recommendations...";
 
-        const keywords = extractTopKeywords(text, 8);
-        const recommendations = [
-            ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
-            ...(keywords.length >= 2 ? [`Try searching: "${keywords[0]} ${keywords[1]}"`] : []),
-            ...(keywords.length >= 3 ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`] : []),
-        ]
+        try {
+            await runIdle();
 
-        store.set({ recommendations });
-        return recommendations;
+            const keywords = extractTopKeywords(text, 8);
+            const recommendations = [
+                ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
+                ...(keywords.length >= 2
+                    ? [`Try searching: "${keywords[0]} ${keywords[1]}"`]
+                    : []),
+                ...(keywords.length >= 3
+                    ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`]
+                    : []),
+            ];
+
+            store.set({ recommendations });
+            return recommendations;
+        } finally {
+            statusEl.textContent = "";
+        }
     }
 
-    return { unsub, generateFrom }
-
+    return { unsub, generateFrom };
 }
