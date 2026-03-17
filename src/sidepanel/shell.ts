@@ -1,19 +1,6 @@
 // Assembler, to assemble the different components
-export type ShellRefs = {
-    titleEl: HTMLElement;
-    urlEl: HTMLElement;
-    btnRefresh: HTMLButtonElement;
-    btnSummarize: HTMLButtonElement;
-    runtimeEl: HTMLElement;
-    backendEl: HTMLElement;
-    webgpuEl: HTMLElement;
-    transformersEl: HTMLElement;
-    notesEl: HTMLElement;
-    previewEl: HTMLElement;
-    summaryEl: HTMLElement;
-    recommendationsEl: HTMLElement;
-    errorEl: HTMLElement;
-};
+
+import type { ShellRefs } from "./types";
 
 function applyStyles(el: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
     Object.assign(el.style, styles);

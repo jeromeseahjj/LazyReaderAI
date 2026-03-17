@@ -1,7 +1,5 @@
 import type { createStore } from "../store";
-import type { AppState, RuntimeStatus } from "../types";
-
-type Store = ReturnType<typeof createStore<AppState>>;
+import type { AppState, RuntimeStatus, Store } from "../types";
 
 export function mountRuntime(
     slot: HTMLElement,

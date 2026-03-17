@@ -1,23 +1,4 @@
-import type { createStore } from "./store";
-import type { AppState, PagePayload, RuntimeStatus } from "./types";
-
-type Store = ReturnType<typeof createStore<AppState>>;
-
-type SummaryController = {
-    generateFrom: (text: string) => Promise<string>;
-};
-
-type RecommendationsController = {
-    generateFrom: (text: string) => Promise<string[]>;
-};
-
-export type AppControllerDeps = {
-    store: Store;
-    summary: SummaryController;
-    fetchPage: () => Promise<PagePayload>;
-    probeRuntime: () => Promise<RuntimeStatus>;
-    getRecommendations: () => Promise<RecommendationsController>;
-};
+import type { AppControllerDeps } from "./types";
 
 export function createAppController({
     store,
@@ -27,6 +8,37 @@ export function createAppController({
     getRecommendations,
 }: AppControllerDeps) {
     let runId = 0;
+    let summaryRequestId = 0;
+
+    async function runSummary(text: string) {
+        const mySummaryRequest = ++summaryRequestId;
+
+        store.set({
+            summaryLoading: true,
+        });
+
+        try {
+            const result = await summary.generateFrom(text);
+
+            if (mySummaryRequest !== summaryRequestId) {
+                return;
+            }
+
+            store.set({
+                summary: result,
+                summaryLoading: false,
+            });
+        } catch (error) {
+            if (mySummaryRequest !== summaryRequestId) {
+                return;
+            }
+
+            store.set({
+                summaryLoading: false,
+                error: error instanceof Error ? error.message : String(error),
+            });
+        }
+    }
 
     function clearTransientState() {
         store.set({
@@ -38,6 +50,7 @@ export function createAppController({
 
     async function refresh() {
         const myRun = ++runId;
+        summaryRequestId++;
         clearTransientState();
 
         try {
@@ -55,7 +68,7 @@ export function createAppController({
                 runtime,
             });
 
-            await summary.generateFrom(page.text);
+            await runSummary(page.text);
 
             if (myRun !== runId) return;
 
@@ -102,14 +115,7 @@ export function createAppController({
             return;
         }
 
-        try {
-            await summary.generateFrom(text);
-        } catch (error) {
-            store.set({
-                summaryLoading: false,
-                error: error instanceof Error ? error.message : String(error),
-            });
-        }
+        await runSummary(text);
     }
 
     return {

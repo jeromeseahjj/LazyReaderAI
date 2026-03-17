@@ -58,10 +58,7 @@ export function mountSummary(slot: HTMLElement, store: Store) {
         // Let the browser paint "Generating…" before heavy work
         // slot.textContent = "Generating summary...";
         try {
-            console.log(
-                "[summary.generateFrom] Entry, generating using worker",
-            );
-            store.set({ summaryLoading: true });
+            console.log("[summary.generateFrom] Entry, generating using worker");
             // Load 1 frame first, to let user see the "Generating summary...".
             // This promise will resolve and move on with code execution on the next frame.
             // And it doesn't matter how fast the 2nd frame comes, because the loading message rendered.
@@ -71,22 +68,12 @@ export function mountSummary(slot: HTMLElement, store: Store) {
                 (await runWorkerSummary(text)) ||
                 summarizeExtractive(text, 5) ||
                 "Could not summarize this page (not enough readable text).";
-            store.set({
-                summaryLoading: false,
-                summary,
-            });
             return summary;
         } catch (error) {
             console.log("[summary.generateFrom] Error, fallback to basic nlp", error);
             const summary =
                 summarizeExtractive(text, 5) ||
                 "Could not summarize this page (not enough readable text).";
-
-            store.set({
-                summaryLoading: false,
-                summary,
-            });
-
             return summary;
         }
     }

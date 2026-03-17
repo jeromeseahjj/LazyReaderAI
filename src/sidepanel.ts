@@ -1,16 +1,11 @@
-import type { AppState, PagePayload } from "./sidepanel/types";
+import type { AppState, PagePayload, RecommendationsController } from "./sidepanel/types";
 import { createStore } from "./sidepanel/store";
 import { mountShell } from "./sidepanel/shell";
 import { mountPreview } from "./sidepanel/modules/preview";
 import { mountSummary } from "./sidepanel/modules/summary";
 import { probeRuntime } from "./sidepanel/transformer";
 import { mountRuntime } from "./sidepanel/modules/runtime";
-import { summarizeExtractive } from "./sidepanel/nlp";
 import { createAppController } from "./sidepanel/controller";
-
-type RecommendationsController = {
-    generateFrom: (text: string) => Promise<string[]>;
-};
 
 let recommendationsControllerPromise:
     | Promise<RecommendationsController>

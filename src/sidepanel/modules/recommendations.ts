@@ -1,9 +1,5 @@
-import type { AppState } from "../types";
-import type { createStore } from "../store";
+import type { Store } from "../types";
 import { extractTopKeywords } from "../nlp";
-import { escapeHtml } from "../../common/utils";
-
-type Store = ReturnType<typeof createStore<AppState>>;
 
 function runIdle(): Promise<void> {
     return new Promise((resolve) => {
