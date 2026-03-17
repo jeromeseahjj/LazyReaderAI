@@ -8,6 +8,14 @@ import { mountRuntime } from "./sidepanel/modules/runtime";
 import { summarizeExtractive } from "./sidepanel/nlp";
 import { createAppController } from "./sidepanel/controller";
 
+type RecommendationsController = {
+    generateFrom: (text: string) => Promise<string[]>;
+};
+
+let recommendationsControllerPromise:
+    | Promise<RecommendationsController>
+    | undefined;
+
 const root = document.getElementById("app")!;
 
 const store = createStore<AppState>({
@@ -35,26 +43,17 @@ const controller = createAppController({
     fetchPage,
     probeRuntime,
     getRecommendations: async () => {
-        const { mountRecommendations } = await import("./sidepanel/modules/recommendations");
-        return mountRecommendations(shell.recommendationsEl, store);
+        if (!recommendationsControllerPromise) {
+            recommendationsControllerPromise =
+                import("./sidepanel/modules/recommendations").then(
+                    ({ mountRecommendations }) =>
+                        mountRecommendations(shell.recommendationsEl, store),
+                );
+        }
+
+        return recommendationsControllerPromise;
     },
 });
-
-// Recommendations module is lazy
-let recommendationsMod: null | {
-    generateFrom: (text: string) => Promise<string[]>;
-} = null;
-
-let runId = 0;
-
-function escapeHtml(value: string): string {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-}
 
 async function fetchPage(): Promise<PagePayload> {
     const [tab] = await chrome.tabs.query({
@@ -73,67 +72,24 @@ async function fetchPage(): Promise<PagePayload> {
     })) as PagePayload;
 }
 
-// async function load() {
-//     const myRun = ++runId;
-
-//     store.set({
-//         pageLoading: true,
-//         summaryLoading: false,
-//         recommendations: [],
-//     });
-//     shell.errorEl.textContent = "";
-
-//     try {
-//         const [page, runtime] = await Promise.all([
-//             fetchPage(),
-//             probeRuntime(),
-//         ]);
-
-//         if (myRun !== runId) return; // ignore stale results
-
-//         store.set({ 
-//             pageLoading: false,
-//             summaryLoading: false,
-//             page, 
-//             runtime 
-//         });
-
-//         // Summary first (fast path)
-//         await summary.generateFrom(page.text);
-//         if (myRun !== runId) return;
-
-//         // Recommendations later (lazy import + idle compute)
-//         queueMicrotask(async () => {
-//             if (myRun !== runId) return;
-
-//             const { mountRecommendations } =
-//                 await import("./sidepanel/modules/recommendations");
-//             if (myRun !== runId) return;
-
-//             if (!recommendationsMod) {
-//                 recommendationsMod = mountRecommendations(
-//                     shell.recommendationsEl,
-//                     store,
-//                 );
-//             }
-//             await recommendationsMod.generateFrom(page.text);
-//         });
-//     } catch (e: any) {
-//         store.set({ 
-//             pageLoading: false,
-//             summaryLoading: false, 
-//             error: e?.message ?? String(e) });
-//         shell.errorEl.textContent = e?.message ?? String(e);
-//     }
-// }
-
 // Wire buttons once (no re-render = no re-binding needed)
 shell.btnRefresh.addEventListener("click", () => {
     void controller.refresh();
 });
 
-shell.btnSummarize.addEventListener("click", async () => {
+shell.btnSummarize.addEventListener("click", () => {
     void controller.summarizeCurrentPage();
+});
+
+const renderError = (message?: string) => {
+    shell.errorEl.textContent = message ?? "";
+    shell.errorEl.hidden = !message;
+};
+
+renderError(store.get().error);
+
+store.subscribe((state) => {
+    renderError(state.error);
 });
 
 void controller.refresh();

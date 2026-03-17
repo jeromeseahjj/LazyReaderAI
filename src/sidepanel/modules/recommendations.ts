@@ -45,7 +45,6 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
     });
 
     async function generateFrom(text: string) {
-        store.set({ recommendations: [] });
         statusEl.textContent = "Generating recommendations...";
 
         try {
@@ -62,7 +61,6 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
                     : []),
             ];
 
-            store.set({ recommendations });
             return recommendations;
         } finally {
             statusEl.textContent = "";

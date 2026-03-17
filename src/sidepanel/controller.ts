@@ -67,7 +67,11 @@ export function createAppController({
 
                     if (myRun !== runId) return;
 
-                    await recommendations.generateFrom(page.text);
+                    const items = await recommendations.generateFrom(page.text);
+
+                    if (myRun !== runId) return;
+
+                    store.set({ recommendations: items });
                 } catch (error) {
                     if (myRun !== runId) return;
 
