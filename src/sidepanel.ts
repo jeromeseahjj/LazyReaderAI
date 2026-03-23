@@ -1,11 +1,19 @@
+// types
 import type { AppState, PagePayload, RecommendationsController } from "./sidepanel/types";
+
+// infra / state
 import { createStore } from "./sidepanel/store";
+import { createAppController } from "./sidepanel/controller";
+
+// ui modules
 import { mountShell } from "./sidepanel/shell";
 import { mountPreview } from "./sidepanel/modules/preview";
 import { mountSummary } from "./sidepanel/modules/summary";
-import { probeRuntime } from "./sidepanel/transformer";
 import { mountRuntime } from "./sidepanel/modules/runtime";
-import { createAppController } from "./sidepanel/controller";
+
+// app controller
+// feature deps
+import { probeRuntime } from "./sidepanel/transformer";
 
 let recommendationsControllerPromise:
     | Promise<RecommendationsController>
