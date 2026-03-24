@@ -1,4 +1,4 @@
-import type { Store } from "../types";
+import type { Store } from "../../core/types";
 
 export function mountPreview(slot: HTMLElement, store: Store, refs: { titleEl: HTMLElement; urlEl: HTMLElement }) {
     return store.subscribe((state) => {

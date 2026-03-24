@@ -1,19 +1,11 @@
-// types
-import type { AppState, PagePayload, RecommendationsController } from "./sidepanel/types";
-
-// infra / state
-import { createStore } from "./sidepanel/store";
-import { createAppController } from "./sidepanel/controller";
-
-// ui modules
-import { mountShell } from "./sidepanel/shell";
-import { mountPreview } from "./sidepanel/modules/preview";
-import { mountSummary } from "./sidepanel/modules/summary";
-import { mountRuntime } from "./sidepanel/modules/runtime";
-
-// app controller
-// feature deps
-import { probeRuntime } from "./sidepanel/transformer";
+import { createAppController } from "./controller";
+import { createStore } from "./core/store";
+import type { AppState, PagePayload, RecommendationsController } from "./core/types";
+import { mountPreview } from "./features/preview/preview";
+import { probeRuntime } from "./features/runtime/probeRuntime";
+import { mountRuntime } from "./features/runtime/runtime";
+import { mountSummary } from "./features/summary/summary";
+import { mountShell } from "./ui/shell";
 
 let recommendationsControllerPromise:
     | Promise<RecommendationsController>
@@ -48,7 +40,7 @@ const controller = createAppController({
     getRecommendations: async () => {
         if (!recommendationsControllerPromise) {
             recommendationsControllerPromise =
-                import("./sidepanel/modules/recommendations").then(
+                import("./features/recommendations/recommendations").then(
                     ({ mountRecommendations }) =>
                         mountRecommendations(shell.recommendationsEl, store),
                 );

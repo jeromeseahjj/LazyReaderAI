@@ -1,0 +1,26 @@
+# File structure planning
+src:
+  core:
+    types.ts: typing used throughout the project.
+    store: self-made light weight publisher/subscriber store.
+  ui:
+    shell.ts: root node containing all the component ui.
+  features:
+    runtime:
+      runtime.ts: runtime class with mount ui
+      probeRuntime.ts: runtime logic
+    preview:
+      preview.ts: preview class component
+    summary:
+      summary.ts: mount summary
+      summarizer.ts: summarizer logic
+      summary.worker.ts: worker for background work
+    recommendation:
+      recommendation.ts: mount recommendation
+      keywords.ts: extract keyword logic
+  platform:
+    content.ts: extract page text
+    background.ts: chrome background listener for chrome events
+  shared:
+    utils.ts: shared utility functions
+  index.ts: assembler/orchestrator

@@ -1,5 +1,4 @@
-import type { RuntimeStatus } from "./types";
-
+import type { RuntimeStatus } from "../../core/types";
 
 export async function probeRuntime(): Promise<RuntimeStatus> {
     const notes: string[] = [];

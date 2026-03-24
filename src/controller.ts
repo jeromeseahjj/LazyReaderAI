@@ -1,4 +1,4 @@
-import type { AppControllerDeps } from "./types";
+import type { AppControllerDeps } from "./core/types";
 
 export function createAppController({
     store,

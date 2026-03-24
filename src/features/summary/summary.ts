@@ -1,17 +1,12 @@
-import type { AppState } from "../types";
-import type { createStore } from "../store";
-import { summarizeExtractive } from "../nlp";
-import { escapeHtml } from "../../common/utils";
-import type { WorkerResponse } from "../../transformer/types";
-
-type Store = ReturnType<typeof createStore<AppState>>;
+import type { Store, WorkerResponse } from "../../core/types";
+import { summarizeExtractive } from "./summarizer";
 
 let summaryWorker: Worker | null = null;
 
 function getSummaryWorker() {
     if (!summaryWorker) {
         summaryWorker = new Worker(
-            new URL("../../transformer/summary.worker.ts", import.meta.url),
+            new URL("./summary.worker.ts", import.meta.url),
             { type: "module" },
         );
     }

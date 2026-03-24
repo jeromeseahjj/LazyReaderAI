@@ -1,5 +1,4 @@
-import type { createStore } from "../store";
-import type { AppState, RuntimeStatus, Store } from "../types";
+import type { Store } from "../../core/types";
 
 export function mountRuntime(
     slot: HTMLElement,

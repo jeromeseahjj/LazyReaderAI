@@ -1,32 +1,7 @@
 // Offload to a background worker as the whole UI is freezing when the job is running
 import { env, pipeline } from "@huggingface/transformers";
-import type { WorkerRequest, WorkerResponse } from "./types";
+import type { WorkerRequest, WorkerResponse } from "../../core/types";
 import { summarizeLongText } from "./summarizer";
-
-let summarizerPromise: Promise<any> | null = null;
-
-function configureTransformers() {
-    const wasmBackend = env.backends?.onnx?.wasm;
-    if (!wasmBackend) {
-        throw new Error("ONNX WASM backend is not available");
-    }
-
-    wasmBackend.wasmPaths = "/ort/";
-}
-
-async function getSummarizer() {
-    configureTransformers();
-
-    if (!summarizerPromise) {
-        summarizerPromise = pipeline(
-            "summarization",
-            "Xenova/distilbart-cnn-6-6",
-            { device: "wasm" },
-        );
-    }
-
-    return summarizerPromise;
-}
 
 self.postMessage({ type: "READY" } satisfies WorkerResponse);
 

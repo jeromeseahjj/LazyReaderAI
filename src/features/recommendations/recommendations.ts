@@ -1,5 +1,5 @@
-import type { Store } from "../types";
-import { extractTopKeywords } from "../nlp";
+import type { Store } from "../../core/types";
+import { extractTopKeywords } from "./keywords";
 
 function runIdle(): Promise<void> {
     return new Promise((resolve) => {

@@ -1,7 +1,6 @@
+import type { ShellRefs } from "../core/types";
+
 // Assembler, to assemble the different components
-
-import type { ShellRefs } from "./types";
-
 function applyStyles(el: HTMLElement, styles: Partial<CSSStyleDeclaration>) {
     Object.assign(el.style, styles);
     return el;
@@ -124,6 +123,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
     );
 
     root.appendChild(app);
+
     return {
         titleEl,
         urlEl,
