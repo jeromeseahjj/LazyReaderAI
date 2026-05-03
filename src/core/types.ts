@@ -5,10 +5,11 @@ import type { createStore } from "./store";
 export type AppState = {
     pageLoading: boolean;
     summaryLoading: boolean;
-    error?: string;
-    page?: PagePayload;
-    runtime?: RuntimeStatus;
-    summary?: string;
+    error?: string | undefined;
+    page?: PagePayload | undefined;
+    runtime?: RuntimeStatus | undefined;
+    summary?: string | undefined;
+    summaryMeta?: SummaryMeta | undefined;
     recommendations: string[];
 };
 
@@ -64,6 +65,7 @@ export type WorkerResponse =
 export type SummaryResult = {
     summary: string;
     runtime?: SummaryRuntime | undefined;
+    meta: SummaryMeta;
 };
 
 export type SummaryController = {
@@ -105,3 +107,14 @@ export type SummaryRuntime = {
     notes: string[];
 };
 
+// Summary
+export type SummarySource = "model" | "extractive-fallback";
+
+export type SummaryMeta = {
+    source: SummarySource;
+    backend?: Backend | undefined;
+    modelName?: string | undefined;
+    fallbackUsed: boolean;
+    generatedAt: number;
+    inputWordCount: number;
+};

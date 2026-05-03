@@ -26,9 +26,16 @@ export function createAppController({
 
             store.set((prev) => ({
                 summary: result.summary,
+                summaryMeta: result.meta,
                 summaryLoading: false,
                 runtime: prev.runtime && result.runtime
-                    ? { ...prev.runtime, ...result.runtime }
+                    ? { 
+                        ...prev.runtime, 
+                        ...result.runtime,
+                        notes: [
+                            ...(prev.runtime.notes ?? []),
+                            ...(result.runtime.notes ?? [])
+                        ]}
                     : prev.runtime,
             }));
         } catch (error) {
@@ -47,7 +54,10 @@ export function createAppController({
         store.set({
             pageLoading: true,
             summaryLoading: false,
+            summary: undefined,
+            summaryMeta: undefined,
             recommendations: [],
+            error: undefined
         });
     }
 

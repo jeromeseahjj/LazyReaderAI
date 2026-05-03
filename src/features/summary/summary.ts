@@ -13,6 +13,10 @@ function getSummaryWorker() {
     return summaryWorker;
 }
 
+function countWords(text: string): number {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 function runWorkerSummary(text: string): Promise<SummaryResult> {
     const worker = getSummaryWorker();
     const requestId = crypto.randomUUID();
@@ -27,6 +31,14 @@ function runWorkerSummary(text: string): Promise<SummaryResult> {
                 resolve({
                     summary: msg.summary,
                     runtime: msg.runtime,
+                    meta: {
+                        source: "model",
+                        backend: msg.runtime.activeBackend,
+                        modelName: msg.runtime.modelName,
+                        fallbackUsed: msg.runtime.fallbackUsed,
+                        generatedAt: Date.now(),
+                        inputWordCount: countWords(text)
+                    }
                 });
             } else {
                 reject(new Error(msg.error));
