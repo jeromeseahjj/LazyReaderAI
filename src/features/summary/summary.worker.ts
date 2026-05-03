@@ -1,7 +1,7 @@
 // Offload to a background worker as the whole UI is freezing when the job is running
 import { env, pipeline } from "@huggingface/transformers";
 import type { WorkerRequest, WorkerResponse } from "../../core/types";
-import { summarizeLongText } from "./summarizer";
+import { getModelRuntime, summarizeLongText } from "./summarizer";
 
 self.postMessage({ type: "READY" } satisfies WorkerResponse);
 
@@ -12,10 +12,12 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 
     try {
         const summary = await summarizeLongText(msg.text);
+        const runtime = getModelRuntime();
         self.postMessage({
             type: "RESULT",
             requestId: msg.requestId,
             summary,
+            runtime
         } satisfies WorkerResponse);
     } catch (error) {
         self.postMessage({

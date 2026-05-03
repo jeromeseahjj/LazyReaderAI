@@ -28,6 +28,7 @@ const summary = mountSummary(shell.summaryEl, store);
 mountRuntime(shell.runtimeEl, store, {
     backendEl: shell.backendEl,
     webgpuEl: shell.webgpuEl,
+    activeBackendEl: shell.activeBackendEl,
     transformersEl: shell.transformersEl,
     notesEl: shell.notesEl,
 });

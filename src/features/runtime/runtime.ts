@@ -5,6 +5,7 @@ export function mountRuntime(
     store: Store,
     refs: {
         backendEl: HTMLElement;
+        activeBackendEl: HTMLElement;
         webgpuEl: HTMLElement;
         transformersEl: HTMLElement;
         notesEl: HTMLElement;
@@ -21,17 +22,18 @@ export function mountRuntime(
             return;
         }
 
-        refs.backendEl.textContent = `Preferred backend: ${runtime.backend}`;
-        refs.webgpuEl.textContent = `WebGPU: ${
-            runtime.webgpuAvailable ? "available" : "not available"
-        }`;
-        refs.transformersEl.textContent = `Transformers.js: ${
-            runtime.transformersReady ? "ready" : "not ready"
-        }`;
-        
+        refs.backendEl.textContent = `Preferred backend: ${runtime.preferredBackend}`;
+        refs.activeBackendEl.textContent = `Active backend: ${runtime.activeBackend ?? "not loaded yet"}`;
+        refs.webgpuEl.textContent = `WebGPU: ${runtime.webgpuAvailable ? "available" : "not available"
+            }`;
+
+        refs.transformersEl.textContent = runtime.modelReady
+            ? `Model: ${runtime.modelName ?? "unknown"}`
+            : "Model: not loaded";
+
         // Without this, the whole list keeps getting bigger without getting cleared.
         refs.notesEl.replaceChildren();
-
+            
         for (const note of runtime.notes) {
             const li = document.createElement("li");
             li.textContent = note;

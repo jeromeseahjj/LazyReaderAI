@@ -20,7 +20,7 @@ export async function probeRuntime(): Promise<RuntimeStatus> {
         return {
             webgpuAvailable,
             transformersReady: true,
-            backend: webgpuAvailable ? "webgpu" : "wasm",
+            preferredBackend: webgpuAvailable ? "webgpu" : "wasm",
             notes,
         };
     } catch (error) {
@@ -30,7 +30,7 @@ export async function probeRuntime(): Promise<RuntimeStatus> {
         return {
             webgpuAvailable,
             transformersReady: false,
-            backend: "wasm",
+            preferredBackend: "wasm",
             notes,
         };
     }

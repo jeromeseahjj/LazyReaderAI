@@ -1,4 +1,4 @@
-import type { Store, WorkerResponse } from "../../core/types";
+import type { Store, SummaryResult, WorkerResponse } from "../../core/types";
 import { summarizeExtractive } from "./summarizer";
 
 let summaryWorker: Worker | null = null;
@@ -13,7 +13,7 @@ function getSummaryWorker() {
     return summaryWorker;
 }
 
-function runWorkerSummary(text: string): Promise<string> {
+function runWorkerSummary(text: string): Promise<SummaryResult> {
     const worker = getSummaryWorker();
     const requestId = crypto.randomUUID();
     return new Promise((resolve, reject) => {
@@ -24,7 +24,10 @@ function runWorkerSummary(text: string): Promise<string> {
 
             worker.removeEventListener("message", onMessage);
             if (msg.type === "RESULT") {
-                resolve(msg.summary);
+                resolve({
+                    summary: msg.summary,
+                    runtime: msg.runtime,
+                });
             } else {
                 reject(new Error(msg.error));
             }
@@ -58,21 +61,17 @@ export function mountSummary(slot: HTMLElement, store: Store) {
             // This promise will resolve and move on with code execution on the next frame.
             // And it doesn't matter how fast the 2nd frame comes, because the loading message rendered.
             await new Promise<void>((r) => requestAnimationFrame(() => r()));
-
-            const summary =
-                (await runWorkerSummary(text)) ||
-                summarizeExtractive(text, 5) ||
-                "Could not summarize this page (not enough readable text).";
+            const summary = await runWorkerSummary(text)
             return summary;
         } catch (error) {
             console.log("[summary.generateFrom] Error, fallback to basic nlp", error);
-            const summary =
-                summarizeExtractive(text, 5) ||
-                "Could not summarize this page (not enough readable text).";
-            return summary;
+            return {
+                summary: summarizeExtractive(text, 5) || "...",
+                runtime: undefined,
+            };
         }
     }
-    
+
     return {
         unsub,
         generateFrom,

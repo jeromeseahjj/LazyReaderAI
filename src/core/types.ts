@@ -1,14 +1,6 @@
 import type { createStore } from "./store";
 
 // Common
-export type RuntimeStatus = {
-    webgpuAvailable: boolean;
-    transformersReady: boolean;
-    backend: "webgpu" | "wasm";
-    notes: string[];
-    modelReady?: boolean;
-    modelName?: string;
-};
 
 export type AppState = {
     pageLoading: boolean;
@@ -31,6 +23,7 @@ export type ShellRefs = {
     btnSummarize: HTMLButtonElement;
     runtimeEl: HTMLElement;
     backendEl: HTMLElement;
+    activeBackendEl: HTMLElement;
     webgpuEl: HTMLElement;
     transformersEl: HTMLElement;
     notesEl: HTMLElement;
@@ -42,14 +35,14 @@ export type ShellRefs = {
 
 // Summary Worker
 export type SummarizeRequest = {
-  type: "SUMMARIZE";
-  requestId: string;
-  text: string;
+    type: "SUMMARIZE";
+    requestId: string;
+    text: string;
 };
 
 export type WorkerRequest = SummarizeRequest;
 
-export type WorkerResponse = 
+export type WorkerResponse =
     | {
         type: "READY";
     }
@@ -57,6 +50,7 @@ export type WorkerResponse =
         type: "RESULT";
         requestId: string;
         summary: string;
+        runtime: SummaryRuntime;
     }
     | {
         type: "ERROR";
@@ -64,9 +58,16 @@ export type WorkerResponse =
         error: string;
     };
 
+
+
 // Controller
-type SummaryController = {
-    generateFrom: (text: string) => Promise<string>;
+export type SummaryResult = {
+    summary: string;
+    runtime?: SummaryRuntime | undefined;
+};
+
+export type SummaryController = {
+    generateFrom: (text: string) => Promise<SummaryResult>;
 };
 
 export type RecommendationsController = {
@@ -80,3 +81,27 @@ export type AppControllerDeps = {
     probeRuntime: () => Promise<RuntimeStatus>;
     getRecommendations: () => Promise<RecommendationsController>;
 };
+
+// Transformer related
+export type Backend = "webgpu" | "wasm";
+
+export type RuntimeStatus = {
+    webgpuAvailable: boolean;
+    transformersReady: boolean;
+    preferredBackend: Backend;
+    activeBackend?: Backend | undefined;
+    modelReady?: boolean | undefined;
+    modelName?: string | undefined;
+    fallbackUsed?: boolean | undefined;
+    notes: string[];
+} | undefined
+
+export type SummaryRuntime = {
+    preferredBackend: Backend;
+    activeBackend?: Backend | undefined;
+    modelReady: boolean;
+    modelName: string;
+    fallbackUsed: boolean;
+    notes: string[];
+};
+

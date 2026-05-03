@@ -24,10 +24,13 @@ export function createAppController({
                 return;
             }
 
-            store.set({
-                summary: result,
+            store.set((prev) => ({
+                summary: result.summary,
                 summaryLoading: false,
-            });
+                runtime: prev.runtime && result.runtime
+                    ? { ...prev.runtime, ...result.runtime }
+                    : prev.runtime,
+            }));
         } catch (error) {
             if (mySummaryRequest !== summaryRequestId) {
                 return;

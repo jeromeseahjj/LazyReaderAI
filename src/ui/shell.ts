@@ -98,12 +98,14 @@ export function mountShell(root: HTMLElement): ShellRefs {
     runtimeEl.textContent = "Checking runtime...";
 
     const backendEl = document.createElement("div");
+    const activeBackendEl = document.createElement("div");
     const webgpuEl = document.createElement("div");
     const transformersEl = document.createElement("div");
     const notesEl = document.createElement("div");
 
     runtimeEl.append(
         backendEl,
+        activeBackendEl,
         webgpuEl,
         transformersEl,
         notesEl,
@@ -131,6 +133,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
         btnSummarize,
         runtimeEl,
         backendEl,
+        activeBackendEl,
         webgpuEl,
         transformersEl,
         notesEl,

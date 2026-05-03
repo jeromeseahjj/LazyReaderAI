@@ -1,6 +1,8 @@
 import { env, pipeline } from "@huggingface/transformers";
+import type { Backend, SummaryRuntime } from "../../core/types";
 
 let summarizerPromise: Promise<any> | null = null;
+let activeBackend: Backend | null = null;
 
 export function summarizeExtractive(text: string, maxSentences = 5): string {
     const cleaned = text.replace(/\s+/g, " ").trim();
@@ -56,6 +58,18 @@ export function summarizeExtractive(text: string, maxSentences = 5): string {
         .join("\n\n");
 }
 
+export function getModelRuntime(): SummaryRuntime {
+    const preferredBackend = getPreferredBackend();
+    return {
+        preferredBackend,
+        activeBackend: activeBackend ?? undefined,
+        modelReady: activeBackend != null,
+        modelName: "Xenova/distilbart-cnn-6-6",
+        fallbackUsed: preferredBackend === "webgpu" && activeBackend === "wasm",
+        notes: [],
+    };
+}
+
 function configureTransformers() {
     const wasmBackend = env.backends?.onnx?.wasm;
     if (!wasmBackend) {
@@ -65,18 +79,53 @@ function configureTransformers() {
     wasmBackend.wasmPaths = "/ort/";
 }
 
+function getPreferredBackend(): Backend {
+    return typeof navigator !== "undefined" && "gpu" in navigator
+        ? "webgpu"
+        : "wasm";
+}
+
+async function createSummarizer(device: Backend) {
+    return pipeline(
+        "summarization",
+        "Xenova/distilbart-cnn-6-6",
+        { device, ...((device === "webgpu") ? { dtype: "fp32" } : {}) },
+    );
+}
+
 export async function getSummarizer() {
     configureTransformers();
 
     if (!summarizerPromise) {
-        summarizerPromise = pipeline(
-            "summarization",
-            "Xenova/distilbart-cnn-6-6",
-            { device: "wasm" },
-        );
+        summarizerPromise = (async () => {
+            const preferred = getPreferredBackend();
+
+            try {
+                console.log("[summarizer.getSummarizer] preferred", preferred);
+                const summarizer = await createSummarizer(preferred);
+                activeBackend = preferred;
+                return summarizer;
+            } catch (error) {
+                if (preferred === "webgpu") {
+                    const summarizer = await createSummarizer("wasm");
+                    activeBackend = "wasm";
+                    return summarizer;
+                }
+
+                throw error;
+            }
+        })().catch((error) => {
+            summarizerPromise = null;
+            activeBackend = null;
+            throw error;
+        });
     }
 
     return summarizerPromise;
+}
+
+export function getActiveBackend() {
+    return activeBackend;
 }
 
 function chunkText(text: string, maxChars = 2000): string[] {
