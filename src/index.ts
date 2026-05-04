@@ -30,6 +30,7 @@ mountRuntime(shell.runtimeEl, store, {
     webgpuEl: shell.webgpuEl,
     activeBackendEl: shell.activeBackendEl,
     transformersEl: shell.transformersEl,
+    fallbackEl: shell.fallbackEl,
     notesEl: shell.notesEl,
 });
 
@@ -86,6 +87,12 @@ renderError(store.get().error);
 
 store.subscribe((state) => {
     renderError(state.error);
+
+    const busy = state.pageLoading || state.summaryLoading;
+    const hasPageText = Boolean(state.page?.text?.trim());
+
+    shell.btnRefresh.disabled = busy;
+    shell.btnSummarize.disabled = busy || !hasPageText;
 });
 
 void controller.refresh();

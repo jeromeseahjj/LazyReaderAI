@@ -27,6 +27,7 @@ export type ShellRefs = {
     activeBackendEl: HTMLElement;
     webgpuEl: HTMLElement;
     transformersEl: HTMLElement;
+    fallbackEl: HTMLElement;
     notesEl: HTMLElement;
     previewEl: HTMLElement;
     summaryEl: HTMLElement;
@@ -96,7 +97,7 @@ export type RuntimeStatus = {
     modelName?: string | undefined;
     fallbackUsed?: boolean | undefined;
     notes: string[];
-} | undefined
+};
 
 export type SummaryRuntime = {
     preferredBackend: Backend;

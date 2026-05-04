@@ -61,10 +61,38 @@ export function mountSummary(slot: HTMLElement, store: Store) {
             slot.textContent = "Generating summary...";
             return;
         }
-        slot.textContent = state.summary ?? "Not generated yet.";
+        if (!state.summary) {
+            slot.textContent = "Not generated yet.";
+            return;
+        }
+
+        const meta = state.summaryMeta;
+
+        if (!meta) {
+            slot.textContent = state.summary;
+            return;
+        }
+
+        const generatedAt = new Date(meta.generatedAt).toLocaleTimeString();
+        console.log("[summary.mountSummary] generatedAt", generatedAt);
+        const generatedWith =
+            meta.source === "model"
+                ? `Generated with ${meta.backend ?? "unknown backend"}`
+                : `Generated with extractive fallback`;
+
+        const fallbackText = meta.fallbackUsed
+            ? "Fallback used: yes"
+            : "Fallback used: no"
+
+        slot.textContent = `${state.summary}
+        
+        ${generatedWith}
+        ${fallbackText}
+        Words analyzed: ${meta.inputWordCount}
+        Last updated: ${generatedAt}`;
     });
 
-    async function generateFrom(text: string) {
+    async function generateFrom(text: string): Promise<SummaryResult> {
         // Let the browser paint "Generating…" before heavy work
         // slot.textContent = "Generating summary...";
         try {

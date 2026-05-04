@@ -101,6 +101,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
     const activeBackendEl = document.createElement("div");
     const webgpuEl = document.createElement("div");
     const transformersEl = document.createElement("div");
+    const fallbackEl = document.createElement("div");
     const notesEl = document.createElement("div");
 
     runtimeEl.append(
@@ -108,6 +109,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
         activeBackendEl,
         webgpuEl,
         transformersEl,
+        fallbackEl,
         notesEl,
     );
 
@@ -136,6 +138,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
         activeBackendEl,
         webgpuEl,
         transformersEl,
+        fallbackEl,
         notesEl,
         previewEl,
         summaryEl,
