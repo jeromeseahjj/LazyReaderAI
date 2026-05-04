@@ -80,6 +80,14 @@ export function mountSummary(slot: HTMLElement, store: Store) {
             return {
                 summary: summarizeExtractive(text, 5) || "...",
                 runtime: undefined,
+                meta: {
+                    source: "extractive-fallback",
+                    backend: undefined,
+                    modelName: undefined,
+                    fallbackUsed: true,
+                    generatedAt: Date.now(),
+                    inputWordCount: countWords(text)
+                }
             };
         }
     }
