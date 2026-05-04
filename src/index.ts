@@ -11,6 +11,8 @@ let recommendationsControllerPromise:
     | Promise<RecommendationsController>
     | undefined;
 
+let refreshTimer: number | undefined;
+
 const root = document.getElementById("app")!;
 
 const store = createStore<AppState>({
@@ -69,6 +71,18 @@ async function fetchPage(): Promise<PagePayload> {
     })) as PagePayload;
 }
 
+// Debounce refresh for onActivated and onUpdated
+function scheduleRefresh() {
+    if (refreshTimer !== undefined) {
+        clearTimeout(refreshTimer);
+    }
+
+    refreshTimer = window.setTimeout(() => {
+        refreshTimer = undefined;
+        void controller.refresh();
+    }, 250);
+}
+
 // Wire buttons once (no re-render = no re-binding needed)
 shell.btnRefresh.addEventListener("click", () => {
     void controller.refresh();
@@ -77,6 +91,11 @@ shell.btnRefresh.addEventListener("click", () => {
 shell.btnSummarize.addEventListener("click", () => {
     void controller.summarizeCurrentPage();
 });
+
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.type !== "ACTIVE_PAGE_CHANGED") return;
+    scheduleRefresh();
+})
 
 const renderError = (message?: string) => {
     shell.errorEl.textContent = message ?? "";

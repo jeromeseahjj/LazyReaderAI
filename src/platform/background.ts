@@ -1,3 +1,29 @@
+async function notifySidePanelPageChanged(tabId?: number, url?: string) {
+    try {
+        // Notice here we are using chrome.runtime.sendMessage
+        // And not chrome.tab.sendMessage
+        await chrome.runtime.sendMessage({
+            type: "ACTIVE_PAGE_CHANGED",
+            tabId,
+            url
+        });
+    } catch {}
+};
+
+// Updates extension based on user's active tab
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    await notifySidePanelPageChanged(activeInfo.tabId);
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    // Prevents refresh during partial loading states
+    if (changeInfo.status !== "complete") return;
+    // Prevents refreshes from background tabs that are loading.
+    if (!tab.active) return;
+
+    await notifySidePanelPageChanged(tabId, tab.url);
+});
+
 
 chrome.runtime.onInstalled.addListener(() => {
     // Enable side panel on all sides

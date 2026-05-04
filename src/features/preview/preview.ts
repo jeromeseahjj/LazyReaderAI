@@ -19,26 +19,32 @@ export function mountPreview(slot: HTMLElement, store: Store, refs: { titleEl: H
 
 
         const preview = page.text.slice(0, 2000);
-        let qualityTextContent, warning;
+        let warning: string | undefined;
         console.log("[preview.mountPreview] Page quality before switch case", page.quality);
 
         switch (page.quality) {
             case "empty":
-                qualityTextContent = "No readable page text was found.";
+                slot.textContent = "No readable page text was found.";
                 return;
+
             case "weak":
                 warning = "[Warning] Only a small amount of readable text was found. Summary quality may be limited.\n\n";
-            default:
-                const cutoff = page.text.length > 2000
-                    ? "\n\n[Preview truncated to first 2,000 characters...]"
-                    : "";
+                break;
 
-                slot.textContent = [
-                    `${warning ?? ""}${page.wordCount} words extracted\n`,
-                    `${preview}${cutoff}`
-                ].join("\n");
+            case "ok":
+            case "long":
+                break;
         }
-        
+
+        const cutoff = page.text.length > 2000
+            ? "\n\n[Preview truncated to first 2,000 characters...]"
+            : "";
+
+        slot.textContent = [
+            `${warning ?? ""}${page.wordCount} words extracted\n`,
+            `${preview}${cutoff}`,
+        ].join("\n");
+
     })
 
 }
