@@ -75,6 +75,7 @@ export function mountSummary(slot: HTMLElement, store: Store) {
 
         const generatedAt = new Date(meta.generatedAt).toLocaleTimeString();
         console.log("[summary.mountSummary] generatedAt", generatedAt);
+        
         const generatedWith =
             meta.source === "model"
                 ? `Generated with ${meta.backend ?? "unknown backend"}`
@@ -84,12 +85,15 @@ export function mountSummary(slot: HTMLElement, store: Store) {
             ? "Fallback used: yes"
             : "Fallback used: no"
 
-        slot.textContent = `${state.summary}
-        
-        ${generatedWith}
-        ${fallbackText}
-        Words analyzed: ${meta.inputWordCount}
-        Last updated: ${generatedAt}`;
+        slot.textContent = [
+            state.summary,
+            "",
+            generatedWith,
+            fallbackText,
+            `Words analyzed: ${meta.inputWordCount}`,
+            `Last updated: ${generatedAt}`
+        ].join("\n");
+
     });
 
     async function generateFrom(text: string): Promise<SummaryResult> {

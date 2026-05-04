@@ -81,6 +81,16 @@ export function createAppController({
                 runtime,
             });
 
+            if (page.quality === "empty") {
+                store.set({
+                    summary: undefined,
+                    summaryMeta: undefined,
+                    summaryLoading: false,
+                    error: "No readable page text found to summarize."
+                });
+                return;
+            }
+            
             await runSummary(page.text);
 
             if (myRun !== runId) return;

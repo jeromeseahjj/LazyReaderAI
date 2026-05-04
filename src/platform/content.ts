@@ -1,6 +1,18 @@
 import { Readability } from "@mozilla/readability";
+import type { PagePayload, PageQuality } from "../core/types";
 
-function getReadableText(): { title: string; url: string; text: string } {
+function countWords(text: string): number {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function getPageQuality(wordCount: number): PageQuality {
+    if (wordCount === 0) return "empty";
+    if (wordCount < 80) return "weak";
+    if (wordCount > 2500) return "long";
+    return "ok";
+}
+
+function getReadableText(): PagePayload {
     const title = document.title || "";
     const url = location.href;
 
@@ -13,8 +25,15 @@ function getReadableText(): { title: string; url: string; text: string } {
     const text = (article?.textContent ?? document.body?.innerText ?? "")
         .replace(/\n{3,}/g, "\n\n")
         .trim()
-    
-    return { title, url, text }
+
+    const wordCount = countWords(text);
+    return { 
+        title, 
+        url, 
+        text,
+        wordCount,
+        quality: getPageQuality(wordCount) 
+    }
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

@@ -13,7 +13,15 @@ export type AppState = {
     recommendations: string[];
 };
 
-export type PagePayload = { title: string; url: string; text: string };
+export type PageQuality = "empty" | "weak" | "ok" | "long";
+
+export type PagePayload = { 
+    title: string; 
+    url: string; 
+    text: string;
+    wordCount: number;
+    quality: PageQuality; 
+};
 export type Store = ReturnType<typeof createStore<AppState>>;
 
 // UI
