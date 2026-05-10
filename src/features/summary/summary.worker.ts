@@ -1,5 +1,4 @@
 // Offload to a background worker as the whole UI is freezing when the job is running
-import { env, pipeline } from "@huggingface/transformers";
 import type { WorkerRequest, WorkerResponse } from "../../core/types";
 import { getModelRuntime, summarizeLongText } from "./summarizer";
 
