@@ -61,14 +61,22 @@ async function fetchPage(): Promise<PagePayload> {
     });
     if (!tab?.id) throw new Error("No active tab");
 
-    await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["content.js"],
-    });
+    const url = tab.url ?? "";
 
-    return (await chrome.tabs.sendMessage(tab.id, {
-        type: "GET_PAGE_TEXT",
-    })) as PagePayload;
+    if (!/^https?:\/\//.test(url)) {
+        throw new Error("LazyReader can only read normal http/https webpages.");
+    }
+
+    try {
+        return await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_TEXT" }) as PagePayload;;
+    } catch {
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["content.js"],
+        });
+
+        return await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_TEXT" }) as PagePayload;;
+    }
 }
 
 // Debounce refresh for onActivated and onUpdated

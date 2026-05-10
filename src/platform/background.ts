@@ -24,6 +24,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     await notifySidePanelPageChanged(tabId, tab.url);
 });
 
+// For SPA
+chrome.webNavigation.onHistoryStateUpdated.addListener(async (details) => {
+    if (details.frameId !== 0) return;
+
+    const tab = await chrome.tabs.get(details.tabId);
+    if (!tab.active) return;
+
+    await notifySidePanelPageChanged(details.tabId, details.url);
+});
 
 chrome.runtime.onInstalled.addListener(() => {
     // Enable side panel on all sides
