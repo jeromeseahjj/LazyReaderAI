@@ -120,6 +120,9 @@ store.subscribe((state) => {
 
     shell.btnRefresh.disabled = busy;
     shell.btnSummarize.disabled = busy || !hasPageText;
+
+    shell.btnRefresh.ariaBusy = state.pageLoading ? "true" : "false";
+    shell.btnSummarize.ariaBusy = state.summaryLoading ? "true" : "false";
 });
 
 void controller.refresh();

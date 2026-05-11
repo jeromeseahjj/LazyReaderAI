@@ -15,32 +15,80 @@ export function mountRuntime(
     return store.subscribe((state) => {
         const runtime = state.runtime;
 
+        function setValue(
+            el: HTMLElement,
+            value: string,
+            tone: "good" | "warning" | "info" | "muted" = "muted",
+        ) {
+            el.textContent = value;
+            el.dataset.tone = tone;
+        }
+
+        function setNotes(notes: string[]) {
+            refs.notesEl.replaceChildren();
+
+            for (const note of notes) {
+                const li = document.createElement("li");
+                li.textContent = note;
+                refs.notesEl.appendChild(li);
+            }
+        }
+
         if (!runtime) {
-            refs.backendEl.textContent = "";
-            refs.webgpuEl.textContent = "";
-            refs.transformersEl.textContent = "";
-            refs.fallbackEl.textContent = "";
-            refs.notesEl.textContent = "Checking runtime...";
+            slot.setAttribute("aria-busy", "true");
+
+            setValue(refs.backendEl, "checking", "muted");
+            setValue(refs.activeBackendEl, "checking", "muted");
+            setValue(refs.webgpuEl, "checking", "muted");
+            setValue(refs.transformersEl, "checking", "muted");
+            setValue(refs.fallbackEl, "checking", "muted");
+
+            setNotes(["Checking runtime..."]);
             return;
         }
 
-        refs.backendEl.textContent = `Preferred backend: ${runtime.preferredBackend}`;
-        refs.activeBackendEl.textContent = `Active backend: ${runtime.activeBackend ?? "not loaded yet"}`;
-        refs.webgpuEl.textContent = `WebGPU: ${runtime.webgpuAvailable ? "available" : "not available"
-            }`;
+        slot.setAttribute("aria-busy", "false");
 
-        refs.transformersEl.textContent = runtime.modelReady
-            ? `Model: ${runtime.modelName ?? "unknown"}`
-            : "Model: not loaded";
-        
-        refs.fallbackEl.textContent = `Model fallback: ${runtime.fallbackUsed ? "yes" : "no"}`;
-        // Without this, the whole list keeps getting bigger without getting cleared.
-        refs.notesEl.replaceChildren();
-            
-        for (const note of runtime.notes) {
-            const li = document.createElement("li");
-            li.textContent = note;
-            refs.notesEl.appendChild(li);
-        }
+        setValue(
+            refs.backendEl,
+            runtime.preferredBackend.toUpperCase(),
+            "info",
+        );
+
+        setValue(
+            refs.activeBackendEl,
+            runtime.activeBackend
+                ? runtime.activeBackend.toUpperCase()
+                : "not loaded yet",
+            runtime.activeBackend ? "good" : "muted",
+        );
+
+        setValue(
+            refs.webgpuEl,
+            runtime.webgpuAvailable ? "available" : "not available",
+            runtime.webgpuAvailable ? "good" : "warning",
+        );
+
+        setValue(
+            refs.transformersEl,
+            runtime.modelReady
+                ? runtime.modelName ?? "model ready"
+                : runtime.transformersReady
+                    ? "import ready"
+                    : "not ready",
+            runtime.transformersReady ? "good" : "warning",
+        );
+
+        setValue(
+            refs.fallbackEl,
+            runtime.fallbackUsed ? "yes" : "no",
+            runtime.fallbackUsed ? "warning" : "good",
+        );
+
+        setNotes(
+            runtime.notes.length > 0
+                ? runtime.notes
+                : ["Runtime check complete."],
+        );
     });
 }

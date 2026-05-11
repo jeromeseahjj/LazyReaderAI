@@ -13,10 +13,158 @@ function section(title: string, body: HTMLElement) {
     return wrap;
 }
 
+function ensureShellStyles() {
+    if (document.getElementById("lr-shell-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "lr-shell-styles";
+    style.textContent = `
+        .lr-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lr-button {
+            appearance: none;
+            border: 1px solid var(--lr-control-border, rgba(255,255,255,0.18));
+            border-radius: 999px;
+            padding: 10px 14px;
+            min-height: 40px;
+            flex: 1;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 750;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition:
+                transform 160ms ease,
+                background 160ms ease,
+                border-color 160ms ease,
+                box-shadow 160ms ease,
+                opacity 160ms ease;
+            user-select: none;
+        }
+
+        .lr-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .lr-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .lr-button:focus-visible {
+            outline: 3px solid rgba(216, 180, 254, 0.45);
+            outline-offset: 2px;
+        }
+
+        .lr-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.48;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .lr-button--secondary {
+            color: var(--lr-control-text, #f8fafc);
+            background: var(--lr-control-bg, rgba(255,255,255,0.12));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+        }
+
+        .lr-button--secondary:hover:not(:disabled) {
+            background: var(--lr-control-bg-hover, rgba(255,255,255,0.18));
+        }
+
+        .lr-button--primary {
+            color: var(--lr-primary-text, #180225);
+            background: var(--lr-primary-bg, linear-gradient(135deg, #c084fc 0%, #818cf8 100%));
+            border-color: rgba(255,255,255,0.25);
+            box-shadow:
+                0 14px 28px rgba(168, 85, 247, 0.28),
+                inset 0 1px 0 rgba(255,255,255,0.45);
+        }
+
+        .lr-button--primary:hover:not(:disabled) {
+            background: var(--lr-primary-bg-hover, linear-gradient(135deg, #d8b4fe 0%, #a5b4fc 100%));
+            box-shadow:
+                0 18px 34px rgba(168, 85, 247, 0.34),
+                inset 0 1px 0 rgba(255,255,255,0.50);
+        }
+
+        .lr-runtime-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--lr-card-border, rgba(255,255,255,0.18));
+            border-radius: 18px;
+            background: var(--lr-card-bg, rgba(255,255,255,0.10));
+            backdrop-filter: blur(18px);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .lr-runtime-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .lr-runtime-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+
+        .lr-runtime-label {
+            color: var(--lr-muted, rgba(226,232,240,0.72));
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .lr-runtime-value {
+            color: var(--lr-text, #f8fafc);
+            font-size: 12px;
+            font-weight: 750;
+            text-align: right;
+        }
+
+        .lr-runtime-value[data-tone="good"] {
+            color: var(--lr-success, #86efac);
+        }
+
+        .lr-runtime-value[data-tone="warning"] {
+            color: var(--lr-warning, #fde68a);
+        }
+
+        .lr-runtime-value[data-tone="info"] {
+            color: var(--lr-info, #bfdbfe);
+        }
+
+        .lr-runtime-value[data-tone="muted"] {
+            color: var(--lr-muted, rgba(226,232,240,0.72));
+        }
+
+        .lr-runtime-notes {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--lr-muted, rgba(226,232,240,0.72));
+            font-size: 12px;
+            line-height: 1.45;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
 export function mountShell(root: HTMLElement): ShellRefs {
     root.innerHTML = "";
 
     applyTheme("default");
+    ensureShellStyles();
 
     document.documentElement.style.minHeight = "100%";
     document.documentElement.style.background = "var(--lr-bg, #12001f)";
@@ -106,14 +254,19 @@ export function mountShell(root: HTMLElement): ShellRefs {
 
     // Actions
     const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
+    actions.className = "lr-actions";
 
     const btnRefresh = document.createElement("button");
+    btnRefresh.type = "button";
+    btnRefresh.className = "lr-button lr-button--secondary";
     btnRefresh.textContent = "Refresh";
+    btnRefresh.title = "Reload page text and runtime status";
 
     const btnSummarize = document.createElement("button");
+    btnSummarize.type = "button";
+    btnSummarize.className = "lr-button lr-button--primary";
     btnSummarize.textContent = "Summarize";
+    btnSummarize.title = "Generate a summary from this page";
 
     actions.append(btnRefresh, btnSummarize);
 
@@ -142,27 +295,53 @@ export function mountShell(root: HTMLElement): ShellRefs {
     recommendationsEl.textContent = "Recommendations will appear here.";
 
     const runtimeEl = document.createElement("div");
-    runtimeEl.style.whiteSpace = "pre-wrap";
-    runtimeEl.style.border = "1px solid #ddd";
-    runtimeEl.style.padding = "8px";
-    runtimeEl.style.borderRadius = "8px";
-    runtimeEl.textContent = "Checking runtime...";
+    runtimeEl.className = "lr-runtime-card";
+    runtimeEl.setAttribute("aria-live", "polite");
+    runtimeEl.setAttribute("aria-busy", "true");
 
-    const backendEl = document.createElement("div");
-    const activeBackendEl = document.createElement("div");
-    const webgpuEl = document.createElement("div");
-    const transformersEl = document.createElement("div");
-    const fallbackEl = document.createElement("div");
-    const notesEl = document.createElement("div");
+    function runtimeRow(labelText: string) {
+        const row = document.createElement("div");
+        row.className = "lr-runtime-row";
 
-    runtimeEl.append(
-        backendEl,
-        activeBackendEl,
-        webgpuEl,
-        transformersEl,
-        fallbackEl,
-        notesEl,
+        const label = document.createElement("span");
+        label.className = "lr-runtime-label";
+        label.textContent = labelText;
+
+        const value = document.createElement("span");
+        value.className = "lr-runtime-value";
+        value.textContent = "Checking...";
+
+        row.append(label, value);
+
+        return { row, value };
+    }
+
+    const backendRow = runtimeRow("Preferred");
+    const activeBackendRow = runtimeRow("Active");
+    const webgpuRow = runtimeRow("WebGPU");
+    const transformersRow = runtimeRow("Transformers");
+    const fallbackRow = runtimeRow("Fallback");
+
+    const runtimeGrid = document.createElement("div");
+    runtimeGrid.className = "lr-runtime-grid";
+    runtimeGrid.append(
+        backendRow.row,
+        activeBackendRow.row,
+        webgpuRow.row,
+        transformersRow.row,
+        fallbackRow.row,
     );
+
+    const notesEl = document.createElement("ul");
+    notesEl.className = "lr-runtime-notes";
+
+    runtimeEl.append(runtimeGrid, notesEl);
+
+    const backendEl = backendRow.value;
+    const activeBackendEl = activeBackendRow.value;
+    const webgpuEl = webgpuRow.value;
+    const transformersEl = transformersRow.value;
+    const fallbackEl = fallbackRow.value;
 
     const errorEl = document.createElement("div");
     errorEl.style.color = "var(--lr-danger, #fecaca)";
