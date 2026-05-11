@@ -1,9 +1,24 @@
 import type { Store } from "../../core/types";
 
+function formatUrlLabel(url: string): string {
+    if (!url) return "";
+
+    try {
+        const parsed = new URL(url);
+        return parsed.hostname.replace(/^www\./, "");
+    } catch {
+        return url;
+    }
+}
+
 export function mountPreview(slot: HTMLElement, store: Store, refs: { titleEl: HTMLElement; urlEl: HTMLElement }) {
     return store.subscribe((state) => {
-        refs.titleEl.textContent = state.page?.title ?? ""
-        refs.urlEl.textContent = state.page?.url ?? ""
+        const title = state.page?.title ?? "";
+        const url = state.page?.url ?? "";
+
+        refs.titleEl.textContent = title || "No page title";
+        refs.urlEl.textContent = formatUrlLabel(url);
+        refs.urlEl.title = url;
 
         if (state.pageLoading) {
             slot.textContent = "Loading...";
