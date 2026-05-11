@@ -1,16 +1,23 @@
-Generate Explore Next suggestions from the summary.
+Task: Convert the page summary into 5 Explore More suggestions.
 
-Rules:
-- Return 5 items only.
-- Each item must be short.
-- Recommend topics, not articles.
-- Stay grounded in the summary.
-- Do not mention LazyReader AI.
-- Do not explain.
+Return exactly 5 lines.
+Do not write a paragraph.
+Do not summarize the page.
+Do not mention articles, authors, websites, or LazyReader AI.
+Each line must start with one of these exact prefixes:
+Related topic:
+Related topic:
+Try searching:
+Compare:
+Related topic:
 
-Format:
-Related topic: ...
-Related topic: ...
-Try searching: "..."
-Compare: "... vs ..."
-Related topic: ...
+Use broad learning topics, not full sentences.
+
+Example output:
+Related topic: Carbon markets
+Related topic: EU climate policy
+Try searching: "carbon market benchmark values"
+Compare: "emissions trading vs carbon taxes"
+Related topic: Industrial decarbonization
+
+Now generate the 5 lines from the summary below.

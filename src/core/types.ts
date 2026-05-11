@@ -97,6 +97,7 @@ export type RecommendationInput = {
     summary: string;
     title: string;
     url: string;
+    pageText: string;
 };
 
 export type RecommendationsController = {

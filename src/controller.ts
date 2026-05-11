@@ -108,12 +108,19 @@ export function createAppController({
 
                     if (myRun !== runId) return;
 
-                    if (!summaryResult?.summary?.trim()) return;
+                    if (!summaryResult?.summary?.trim()) {
+                        store.set({
+                            recommendations: [],
+                            recommendationsLoading: false,
+                        });
+                        return;
+                    }
 
                     const items = await recommendations.generateFrom({
                         title: page.title,
                         url: page.url,
                         summary: summaryResult.summary,
+                        pageText: page.text,
                     });
 
                     if (myRun !== runId) return;

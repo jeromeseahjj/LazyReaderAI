@@ -1,6 +1,6 @@
 import type { RecommendationInput, Store, WorkerResponse } from "../../core/types";
 import recommendationPrompt from "./recommendation.prompt.md?raw";
-import { extractTopKeywords } from "./keywords";
+import { extractTopKeywords, extractTopPhrases } from "./keywords";
 import { createLoadingState } from "../../ui/loading";
 import { getModelWorker } from "../model/modelWorker";
 
@@ -14,6 +14,30 @@ function runIdle(): Promise<void> {
         if (ric) ric(() => resolve());
         else setTimeout(() => resolve(), 0); // Fallback in the event ric is undefined.
     });
+}
+
+function buildFallbackRecommendations(input: RecommendationInput): string[] {
+    const sourceText = [
+        input.title,
+        input.title,
+        input.summary,
+        input.pageText.slice(0, 4000),
+    ].join(" ");
+
+    const phrases = extractTopPhrases(sourceText, 8);
+    const keywords = extractTopKeywords(sourceText, 8);
+
+    const topicA = phrases[0] ?? keywords[0] ?? "key ideas";
+    const topicB = phrases[1] ?? keywords[1] ?? "background context";
+    const topicC = phrases[2] ?? keywords[2] ?? "related concepts";
+
+    return [
+        `Related topic: ${topicA}`,
+        `Related topic: ${topicB}`,
+        `Try searching: "${topicA}"`,
+        `Compare: "${topicA} vs ${topicC}"`,
+        `Related topic: ${phrases[3] ?? keywords[3] ?? "further reading"}`,
+    ];
 }
 
 export function mountRecommendations(slot: HTMLElement, store: Store) {
@@ -74,41 +98,44 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
         }
     });
 
-async function generateFrom(input: RecommendationInput) {
-    await runIdle();
+    async function generateFrom(input: RecommendationInput) {
+        await runIdle();
 
-    const worker = getModelWorker();
-    const requestId = crypto.randomUUID();
+        const worker = getModelWorker();
+        const requestId = crypto.randomUUID();
 
-    return new Promise<string[]>((resolve, reject) => {
-        const onMessage = (event: MessageEvent<WorkerResponse>) => {
-            const msg = event.data;
+        return new Promise<string[]>((resolve, reject) => {
+            const onMessage = (event: MessageEvent<WorkerResponse>) => {
+                const msg = event.data;
 
-            if (msg.type === "READY") return;
-            if (!("requestId" in msg) || msg.requestId !== requestId) return;
+                if (msg.type === "READY") return;
+                if (!("requestId" in msg) || msg.requestId !== requestId) return;
 
-            worker.removeEventListener("message", onMessage);
+                worker.removeEventListener("message", onMessage);
 
-            if (msg.type === "RECOMMENDATION_RESULT") {
-                resolve(msg.recommendations);
-                return;
-            }
+                if (msg.type === "RECOMMENDATION_RESULT") {
+                    console.log("[recommendations.generateFrom] RECOMMENDATION_RESULT:", msg.recommendations);
 
-            if (msg.type === "ERROR") {
-                reject(new Error(msg.error));
-            }
-        };
+                    resolve(buildFallbackRecommendations(input));
+                    return;
+                }
 
-        worker.addEventListener("message", onMessage);
+                if (msg.type === "ERROR") {
+                    resolve(buildFallbackRecommendations(input));
+                    return;
+                }
+            };
 
-        worker.postMessage({
-            type: "RECOMMEND",
-            requestId,
-            summary: input.summary,
-            prompt: recommendationPrompt,
+            worker.addEventListener("message", onMessage);
+
+            worker.postMessage({
+                type: "RECOMMEND",
+                requestId,
+                summary: input.summary,
+                prompt: recommendationPrompt,
+            });
         });
-    });
-}
+    }
 
     return { unsub, generateFrom };
 }

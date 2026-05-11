@@ -235,7 +235,7 @@ export function mountShell(root: HTMLElement): ShellRefs {
         header,
         actions,
         section("Summary", summaryEl),
-        section("Recommendations", recommendationsEl),
+        section("Explore More...", recommendationsEl),
         section("Page text (preview)", previewEl),
         collapsibleSection("Diagnostics", runtimeEl),
         errorEl,

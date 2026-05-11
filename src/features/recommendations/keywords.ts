@@ -24,3 +24,40 @@ export function extractTopKeywords(text: string, topK = 8): string[] {
         .slice(0, topK)
         .map(([w]) => w);
 }
+
+export function extractTopPhrases(text: string, topK = 8): string[] {
+    const stop = new Set([
+        "the","a","an","and","or","but","if","then","else","to","of","in","on","for","with","as","at","by",
+        "is","are","was","were","be","been","being","it","this","that","these","those","from","into","than",
+        "you","your","we","our","they","their","i","me","my","he","she","his","her","them","there","here",
+        "about","also","more","most","some","such","may","might","can","could","would","should",
+        "who","what","when","where","why","how","which","whose","whom",
+        "said","says","new","updated","update","put","puts","forward","flagship",
+    ]);
+
+    const words = text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .split(/\s+/)
+        .map((w) => w.trim())
+        .filter((w) => w.length > 2)
+        .filter((w) => !stop.has(w))
+        .filter((w) => !/^\d+$/.test(w));
+
+    const scores = new Map<string, number>();
+
+    for (let size = 2; size <= 3; size++) {
+        for (let i = 0; i <= words.length - size; i++) {
+            const phrase = words.slice(i, i + size).join(" ");
+
+            if (phrase.length < 8) continue;
+
+            scores.set(phrase, (scores.get(phrase) ?? 0) + size);
+        }
+    }
+
+    return [...scores.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topK)
+        .map(([phrase]) => phrase);
+}
