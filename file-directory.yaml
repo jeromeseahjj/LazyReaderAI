@@ -9,6 +9,8 @@ src:
     loading.ts: loading spinner across all cards.
     styles.css: fixed/core css changes used app wide.
   features:
+    model:
+      modelWorker.ts: Model worker to combine both summary and recommendation model call.
     runtime:
       runtime.ts: runtime class with mount ui
       probeRuntime.ts: runtime logic

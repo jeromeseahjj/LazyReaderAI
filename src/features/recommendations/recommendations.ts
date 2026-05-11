@@ -1,6 +1,9 @@
-import type { Store } from "../../core/types";
+import type { RecommendationInput, Store, WorkerResponse } from "../../core/types";
+import recommendationPrompt from "./recommendation.prompt.md?raw";
 import { extractTopKeywords } from "./keywords";
 import { createLoadingState } from "../../ui/loading";
+import { getModelWorker } from "../model/modelWorker";
+
 
 function runIdle(): Promise<void> {
     return new Promise((resolve) => {
@@ -71,22 +74,41 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
         }
     });
 
-    async function generateFrom(text: string) {
-        await runIdle();
+async function generateFrom(input: RecommendationInput) {
+    await runIdle();
 
-        const keywords = extractTopKeywords(text, 8);
-        const recommendations = [
-            ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
-            ...(keywords.length >= 2
-                ? [`Try searching: "${keywords[0]} ${keywords[1]}"`]
-                : []),
-            ...(keywords.length >= 3
-                ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`]
-                : []),
-        ];
+    const worker = getModelWorker();
+    const requestId = crypto.randomUUID();
 
-        return recommendations;
-    }
+    return new Promise<string[]>((resolve, reject) => {
+        const onMessage = (event: MessageEvent<WorkerResponse>) => {
+            const msg = event.data;
+
+            if (msg.type === "READY") return;
+            if (!("requestId" in msg) || msg.requestId !== requestId) return;
+
+            worker.removeEventListener("message", onMessage);
+
+            if (msg.type === "RECOMMENDATION_RESULT") {
+                resolve(msg.recommendations);
+                return;
+            }
+
+            if (msg.type === "ERROR") {
+                reject(new Error(msg.error));
+            }
+        };
+
+        worker.addEventListener("message", onMessage);
+
+        worker.postMessage({
+            type: "RECOMMEND",
+            requestId,
+            summary: input.summary,
+            prompt: recommendationPrompt,
+        });
+    });
+}
 
     return { unsub, generateFrom };
 }

@@ -39,6 +39,7 @@ export function createAppController({
                     }
                     : prev.runtime,
             }));
+            return result;
         } catch (error) {
             if (mySummaryRequest !== summaryRequestId) {
                 return;
@@ -48,6 +49,7 @@ export function createAppController({
                 summaryLoading: false,
                 error: error instanceof Error ? error.message : String(error),
             });
+            return undefined;
         }
     }
 
@@ -93,7 +95,7 @@ export function createAppController({
                 return;
             }
 
-            await runSummary(page.text);
+            const summaryResult = await runSummary(page.text);
 
             if (myRun !== runId) return;
 
@@ -106,7 +108,13 @@ export function createAppController({
 
                     if (myRun !== runId) return;
 
-                    const items = await recommendations.generateFrom(page.text);
+                    if (!summaryResult?.summary?.trim()) return;
+
+                    const items = await recommendations.generateFrom({
+                        title: page.title,
+                        url: page.url,
+                        summary: summaryResult.summary,
+                    });
 
                     if (myRun !== runId) return;
 

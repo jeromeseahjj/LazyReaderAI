@@ -2,7 +2,80 @@ import { env, pipeline } from "@huggingface/transformers";
 import type { Backend, SummaryRuntime } from "../../core/types";
 
 let summarizerPromise: Promise<any> | null = null;
+let recommenderPromise: Promise<any> | null = null;
 let activeBackend: Backend | null = null;
+
+async function createRecommender(device: Backend) {
+    return pipeline(
+        "text2text-generation",
+        "Xenova/flan-t5-small",
+        { device, ...((device === "webgpu") ? { dtype: "fp32" } : {}) },
+    );
+}
+
+export async function getRecommender() {
+    configureTransformers();
+
+    if (!recommenderPromise) {
+        recommenderPromise = (async () => {
+            const preferred = getPreferredBackend();
+
+            try {
+                console.log("[recommender.getRecommender] preferred", preferred);
+                return await createRecommender(preferred);
+            } catch (error) {
+                if (preferred === "webgpu") {
+                    return await createRecommender("wasm");
+                }
+
+                throw error;
+            }
+        })().catch((error) => {
+            recommenderPromise = null;
+            throw error;
+        });
+    }
+
+    return recommenderPromise;
+}
+
+function buildRecommendationPrompt(prompt: string, summary: string): string {
+    return [
+        prompt.trim(),
+        "",
+        "Summary:",
+        summary.trim(),
+    ].join("\n");
+}
+
+function parseRecommendationLines(output: string): string[] {
+    return output
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .map((line) => line.replace(/^[-*•]\s*/, ""))
+        .filter(Boolean)
+        .filter((line) => line.length <= 120)
+        .slice(0, 5);
+}
+
+export async function recommendFromSummaryWithModel(
+    summary: string,
+    prompt: string,
+): Promise<string[]> {
+    const recommender = await getRecommender();
+
+    const input = buildRecommendationPrompt(prompt, summary);
+
+    const result = await recommender(input, {
+        max_new_tokens: 96,
+        do_sample: false,
+    });
+
+    const first = Array.isArray(result) ? result[0] : result;
+    const text = (first?.generated_text ?? "").trim();
+
+    return parseRecommendationLines(text);
+}
 
 export function summarizeExtractive(text: string, maxSentences = 5): string {
     const cleaned = text.replace(/\s+/g, " ").trim();
@@ -18,10 +91,10 @@ export function summarizeExtractive(text: string, maxSentences = 5): string {
 
     // Tokenize & build word frequency map
     const stop = new Set([
-        "the","a","an","and","or","but","if","then","else","to","of","in","on","for","with","as","at","by",
-        "is","are","was","were","be","been","being","it","this","that","these","those","from","into","than",
-        "you","your","we","our","they","their","i","me","my","he","she","his","her","them","there","here",
-        "about","also","more","most","some","such","may","might","can","could","would","should",
+        "the", "a", "an", "and", "or", "but", "if", "then", "else", "to", "of", "in", "on", "for", "with", "as", "at", "by",
+        "is", "are", "was", "were", "be", "been", "being", "it", "this", "that", "these", "those", "from", "into", "than",
+        "you", "your", "we", "our", "they", "their", "i", "me", "my", "he", "she", "his", "her", "them", "there", "here",
+        "about", "also", "more", "most", "some", "such", "may", "might", "can", "could", "would", "should",
     ]);
 
     // Old school NLP
@@ -172,7 +245,7 @@ export async function summarizeLongText(text: string): Promise<string> {
     if (partials.length === 0) return "";
 
     if (partials.length === 1) return partials[0] ?? "";
-    
+
     return await summarizeWithModel(partials.join(" "));
 }
 

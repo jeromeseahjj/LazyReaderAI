@@ -16,12 +16,12 @@ export type AppState = {
 
 export type PageQuality = "empty" | "weak" | "ok" | "long";
 
-export type PagePayload = { 
-    title: string; 
-    url: string; 
+export type PagePayload = {
+    title: string;
+    url: string;
     text: string;
     wordCount: number;
-    quality: PageQuality; 
+    quality: PageQuality;
 };
 export type Store = ReturnType<typeof createStore<AppState>>;
 
@@ -51,23 +51,34 @@ export type SummarizeRequest = {
     text: string;
 };
 
-export type WorkerRequest = SummarizeRequest;
+// Recommendation Worker
+// Recommendation request
+export type RecommendRequest = {
+    type: "RECOMMEND";
+    requestId: string;
+    summary: string;
+    prompt: string;
+};
+
+export type WorkerRequest = SummarizeRequest | RecommendRequest;
 
 export type WorkerResponse =
     | {
         type: "READY";
-    }
-    | {
+    } | {
         type: "RESULT";
         requestId: string;
         summary: string;
         runtime: SummaryRuntime;
-    }
-    | {
+    } | {
+        type: "RECOMMENDATION_RESULT";
+        requestId: string;
+        recommendations: string[];
+    } | {
         type: "ERROR";
         requestId: string;
         error: string;
-    };
+    }
 
 
 
@@ -82,8 +93,14 @@ export type SummaryController = {
     generateFrom: (text: string) => Promise<SummaryResult>;
 };
 
+export type RecommendationInput = {
+    summary: string;
+    title: string;
+    url: string;
+};
+
 export type RecommendationsController = {
-    generateFrom: (text: string) => Promise<string[]>;
+    generateFrom: (input: RecommendationInput) => Promise<string[]>;
 };
 
 export type AppControllerDeps = {

@@ -1,6 +1,7 @@
 import type { Store, SummaryResult, WorkerResponse } from "../../core/types";
 import { summarizeExtractive } from "./summarizer";
 import { createLoadingState } from "../../ui/loading";
+import { getModelWorker } from "../model/modelWorker";
 
 let summaryWorker: Worker | null = null;
 
@@ -19,7 +20,7 @@ function countWords(text: string): number {
 }
 
 function runWorkerSummary(text: string): Promise<SummaryResult> {
-    const worker = getSummaryWorker();
+    const worker = getModelWorker();
     const requestId = crypto.randomUUID();
     return new Promise((resolve, reject) => {
         const onMessage = (event: MessageEvent<WorkerResponse>) => {
@@ -42,7 +43,12 @@ function runWorkerSummary(text: string): Promise<SummaryResult> {
                     }
                 });
             } else {
-                reject(new Error(msg.error));
+                if (msg.type === "ERROR") {
+                    reject(new Error(msg.error));
+                } else {
+                    reject(new Error("Error encountered when running summary."));
+                }
+                
             }
         };
 
