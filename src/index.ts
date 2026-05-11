@@ -2,16 +2,13 @@ import "./ui/styles.css";
 
 import { createAppController } from "./controller";
 import { createStore } from "./core/store";
-import type { AppState, PagePayload, RecommendationsController } from "./core/types";
+import type { AppState, PagePayload } from "./core/types";
+import { mountRecommendations } from "./features/recommendations/recommendations";
 import { mountPreview } from "./features/preview/preview";
 import { probeRuntime } from "./features/runtime/probeRuntime";
 import { mountRuntime } from "./features/runtime/runtime";
 import { mountSummary } from "./features/summary/summary";
 import { mountShell } from "./ui/shell";
-
-let recommendationsControllerPromise:
-    | Promise<RecommendationsController>
-    | undefined;
 
 let refreshTimer: number | undefined;
 
@@ -39,22 +36,14 @@ mountRuntime(shell.runtimeEl, store, {
     notesEl: shell.notesEl,
 });
 
+const recommendations = mountRecommendations(shell.recommendationsEl, store);
+
 const controller = createAppController({
     store,
     summary,
     fetchPage,
     probeRuntime,
-    getRecommendations: async () => {
-        if (!recommendationsControllerPromise) {
-            recommendationsControllerPromise =
-                import("./features/recommendations/recommendations").then(
-                    ({ mountRecommendations }) =>
-                        mountRecommendations(shell.recommendationsEl, store),
-                );
-        }
-
-        return recommendationsControllerPromise;
-    },
+    getRecommendations: async () => recommendations
 });
 
 async function fetchPage(): Promise<PagePayload> {

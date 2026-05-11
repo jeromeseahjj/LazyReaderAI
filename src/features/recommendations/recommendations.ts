@@ -23,21 +23,33 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
     slot.replaceChildren(statusEl, list);
 
     const unsub = store.subscribe((state) => {
+        if (state.pageLoading) {
+            slot.setAttribute("aria-busy", "true");
+            list.replaceChildren(createLoadingState("Loading page..."));
+            return;
+        }
+
+        if (state.summaryLoading) {
+            slot.setAttribute("aria-busy", "true");
+            list.replaceChildren(createLoadingState("Waiting for summary..."));
+            return;
+        }
+
         if (state.recommendationsLoading) {
+            slot.setAttribute("aria-busy", "true");
             list.replaceChildren(createLoadingState("Generating recommendations..."));
             return;
         }
-        const items = state.recommendations ?? [];
 
-        slot.setAttribute("aria-busy", state.pageLoading ? "true" : "false");
+        slot.setAttribute("aria-busy", "false");
+
+        const items = state.recommendations ?? [];
         list.replaceChildren();
 
         if (items.length === 0) {
             const emptyEl = document.createElement("div");
             emptyEl.className = "lr-recommendations-empty";
-            emptyEl.textContent = state.pageLoading
-                ? "Loading page..."
-                : "Recommendations will appear after the summary.";
+            emptyEl.textContent = "Recommendations will appear after the summary.";
             list.appendChild(emptyEl);
             return;
         }
