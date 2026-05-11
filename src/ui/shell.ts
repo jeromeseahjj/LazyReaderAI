@@ -13,6 +13,31 @@ function section(title: string, body: HTMLElement) {
     return wrap;
 }
 
+function collapsibleSection(title: string, body: HTMLElement) {
+    const details = document.createElement("details");
+    details.className = "lr-disclosure-section";
+
+    const summary = document.createElement("summary");
+    summary.className = "lr-disclosure-summary";
+
+    const label = document.createElement("span");
+    label.textContent = title;
+
+    const hint = document.createElement("span");
+    hint.className = "lr-disclosure-hint";
+    hint.textContent = "Optional";
+
+    summary.append(label, hint);
+
+    const content = document.createElement("div");
+    content.className = "lr-disclosure-content";
+    content.appendChild(body);
+
+    details.append(summary, content);
+
+    return details;
+}
+
 function ensureShellStyles() {
     if (document.getElementById("lr-shell-styles")) return;
 
@@ -154,6 +179,51 @@ function ensureShellStyles() {
             color: var(--lr-muted, rgba(226,232,240,0.72));
             font-size: 12px;
             line-height: 1.45;
+        }
+
+        .lr-disclosure-section {
+            border: 1px solid var(--lr-card-border, rgba(255,255,255,0.18));
+            border-radius: 18px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden;
+        }
+
+        .lr-disclosure-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 12px;
+            cursor: pointer;
+            color: var(--lr-muted, rgba(226,232,240,0.72));
+            font-size: 13px;
+            font-weight: 750;
+            user-select: none;
+        }
+
+        .lr-disclosure-summary:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--lr-text, #f8fafc);
+        }
+
+        .lr-disclosure-summary:focus-visible {
+            outline: 3px solid rgba(216, 180, 254, 0.45);
+            outline-offset: -3px;
+        }
+
+        .lr-disclosure-hint {
+            color: var(--lr-muted, rgba(226,232,240,0.72));
+            font-size: 11px;
+            font-weight: 650;
+            opacity: 0.8;
+        }
+
+        .lr-disclosure-content {
+            padding: 0 12px 12px;
+        }
+
+        .lr-disclosure-section[open] .lr-disclosure-hint {
+            display: none;
         }
     `;
 
@@ -349,13 +419,12 @@ export function mountShell(root: HTMLElement): ShellRefs {
     app.append(
         header,
         actions,
-        section("Runtime", runtimeEl),
-        section("Page text (preview)", previewEl),
         section("Summary", summaryEl),
         section("Recommendations", recommendationsEl),
+        section("Page text (preview)", previewEl),
+        collapsibleSection("Diagnostics", runtimeEl),
         errorEl,
     );
-
     root.appendChild(app);
 
     return {
