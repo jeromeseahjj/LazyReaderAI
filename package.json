@@ -1,7 +1,7 @@
 {
   "name": "lazyreaderai",
   "version": "1.0.0",
-  "description": "Chrome extension to summarize anything",
+  "description": "Chrome extension to summarize news article on the go.",
   "homepage": "https://github.com/jeromeseahjj/LazyReaderAI#readme",
   "bugs": {
     "url": "https://github.com/jeromeseahjj/LazyReaderAI/issues"

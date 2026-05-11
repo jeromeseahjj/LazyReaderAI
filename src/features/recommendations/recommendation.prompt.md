@@ -1,23 +1,22 @@
-Task: Convert the page summary into 5 Explore More suggestions.
+You generate Explore More suggestions.
 
 Return exactly 5 lines.
-Do not write a paragraph.
-Do not summarize the page.
-Do not mention articles, authors, websites, or LazyReader AI.
-Each line must start with one of these exact prefixes:
-Related topic:
-Related topic:
-Try searching:
-Compare:
-Related topic:
+Use only these formats:
+Related topic: ...
+Related topic: ...
+Try searching: "..."
+Compare: "... vs ..."
+Related topic: ...
 
-Use broad learning topics, not full sentences.
+Do not return numbers only.
+Do not explain.
+Do not use bullet points.
 
-Example output:
-Related topic: Carbon markets
-Related topic: EU climate policy
-Try searching: "carbon market benchmark values"
-Compare: "emissions trading vs carbon taxes"
-Related topic: Industrial decarbonization
+Example:
+Related topic: carbon market reform
+Related topic: emissions trading benchmarks
+Try searching: "EU carbon market benchmark values"
+Compare: "carbon credits vs emissions allowances"
+Related topic: industrial decarbonization policy
 
-Now generate the 5 lines from the summary below.
+Now generate suggestions from the content below.

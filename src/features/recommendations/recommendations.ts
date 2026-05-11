@@ -24,20 +24,56 @@ function buildFallbackRecommendations(input: RecommendationInput): string[] {
         input.pageText.slice(0, 4000),
     ].join(" ");
 
-    const phrases = extractTopPhrases(sourceText, 8);
-    const keywords = extractTopKeywords(sourceText, 8);
+    const phrases = extractTopPhrases(sourceText, 12);
+    const keywords = extractTopKeywords(sourceText, 12);
 
-    const topicA = phrases[0] ?? keywords[0] ?? "key ideas";
-    const topicB = phrases[1] ?? keywords[1] ?? "background context";
-    const topicC = phrases[2] ?? keywords[2] ?? "related concepts";
+    const candidates = [...phrases, ...keywords]
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .filter((item) => item.length >= 4)
+        .filter((item) => item.length <= 60);
+
+    const unique = [...new Set(candidates)];
+
+    const topicA = unique[0] ?? "key ideas";
+    const topicB = unique[1] ?? "background context";
+    const topicC = unique[2] ?? "related concepts";
+    const topicD = unique[3] ?? "further reading";
 
     return [
         `Related topic: ${topicA}`,
         `Related topic: ${topicB}`,
         `Try searching: "${topicA}"`,
         `Compare: "${topicA} vs ${topicC}"`,
-        `Related topic: ${phrases[3] ?? keywords[3] ?? "further reading"}`,
+        `Related topic: ${topicD}`,
     ];
+}
+
+function normalizeModelRecommendations(items: unknown): string[] {
+    if (!Array.isArray(items)) return [];
+
+    return items
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+
+        // Reject useless outputs like "5", "1.", "-", etc.
+        .filter((item) => !/^\d+\.?$/.test(item))
+
+        // Reject very short answers like "AI", "news", "who"
+        .filter((item) => item.length >= 8)
+
+        // Require at least some real letters
+        .filter((item) => /[a-zA-Z]{4,}/.test(item))
+
+        // Optional but recommended: require your expected formats
+        .filter((item) =>
+            item.startsWith("Related topic:") ||
+            item.startsWith("Try searching:") ||
+            item.startsWith("Compare:")
+        )
+
+        .slice(0, 5);
 }
 
 export function mountRecommendations(slot: HTMLElement, store: Store) {
@@ -98,7 +134,8 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
         }
     });
 
-    async function generateFrom(input: RecommendationInput) {
+    // Not using for now. Maybe v2 with API support from external service providers.
+    async function generateFromModel(input: RecommendationInput) {
         await runIdle();
 
         const worker = getModelWorker();
@@ -116,7 +153,10 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
                 if (msg.type === "RECOMMENDATION_RESULT") {
                     console.log("[recommendations.generateFrom] RECOMMENDATION_RESULT:", msg.recommendations);
 
-                    resolve(buildFallbackRecommendations(input));
+                    const modelItems = normalizeModelRecommendations(msg.recommendations);
+                    const fallback = buildFallbackRecommendations(input);
+
+                    resolve(modelItems.length >= 3 ? modelItems : fallback);
                     return;
                 }
 
@@ -131,10 +171,24 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
             worker.postMessage({
                 type: "RECOMMEND",
                 requestId,
-                summary: input.summary,
+                summary: [
+                    `Title: ${input.title}`,
+                    "",
+                    "Summary:",
+                    input.summary,
+                    "",
+                    "Page keywords/context:",
+                    input.pageText.slice(0, 1200),
+                ].join("\n"),
                 prompt: recommendationPrompt,
             });
         });
+    }
+
+    async function generateFrom(input: RecommendationInput) {
+        await runIdle();
+
+        return buildFallbackRecommendations(input);
     }
 
     return { unsub, generateFrom };

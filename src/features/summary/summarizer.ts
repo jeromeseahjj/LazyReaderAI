@@ -39,23 +39,67 @@ export async function getRecommender() {
     return recommenderPromise;
 }
 
-function buildRecommendationPrompt(prompt: string, summary: string): string {
+function buildRecommendationPrompt(summary: string): string {
     return [
-        prompt.trim(),
+        "Task: Generate Explore More suggestions for a reader.",
         "",
-        "Summary:",
+        "Return exactly 5 lines.",
+        "Use this exact format:",
+        "Related topic: <short topic>",
+        "Related topic: <short topic>",
+        "Try searching: \"<short search query>\"",
+        "Compare: \"<topic A> vs <topic B>\"",
+        "Related topic: <short topic>",
+        "",
+        "Rules:",
+        "- Do not summarize the article.",
+        "- Do not continue the article.",
+        "- Do not explain.",
+        "- Do not return numbers only.",
+        "- Each line must be under 90 characters.",
+        "",
+        "Example:",
+        "Related topic: energy supply risk",
+        "Related topic: oil price volatility",
+        "Try searching: \"Middle East energy supply disruption\"",
+        "Compare: \"oil futures vs spot oil prices\"",
+        "Related topic: geopolitical risk in energy markets",
+        "",
+        "Article content:",
         summary.trim(),
+        "",
+        "Explore More suggestions:",
     ].join("\n");
 }
 
 function parseRecommendationLines(output: string): string[] {
-    return output
+    const cleaned = output
         .split(/\n+/)
         .map((line) => line.trim())
         .map((line) => line.replace(/^[-*•]\s*/, ""))
+        .map((line) => line.replace(/^\d+[\.)]\s*/, ""))
         .filter(Boolean)
+        .filter((line) => !/^\d+[\.)]?$/.test(line))
+        .filter((line) => line.length >= 8)
+        .filter((line) => /[a-zA-Z]{4,}/.test(line))
         .filter((line) => line.length <= 120)
         .slice(0, 5);
+
+    return cleaned.map((line, index) => {
+        if (
+            line.startsWith("Related topic:") ||
+            line.startsWith("Try searching:") ||
+            line.startsWith("Compare:")
+        ) {
+            return line;
+        }
+
+        if (index === 2) {
+            return `Try searching: "${line}"`;
+        }
+
+        return `Related topic: ${line}`;
+    });
 }
 
 export async function recommendFromSummaryWithModel(
@@ -64,7 +108,7 @@ export async function recommendFromSummaryWithModel(
 ): Promise<string[]> {
     const recommender = await getRecommender();
 
-    const input = buildRecommendationPrompt(prompt, summary);
+    const input = buildRecommendationPrompt(summary);
 
     const result = await recommender(input, {
         max_new_tokens: 96,
@@ -74,7 +118,15 @@ export async function recommendFromSummaryWithModel(
     const first = Array.isArray(result) ? result[0] : result;
     const text = (first?.generated_text ?? "").trim();
 
-    return parseRecommendationLines(text);
+    const parsed = parseRecommendationLines(text);
+
+    console.log("[recommendFromSummaryWithModel] raw result:", result);
+    console.log("[recommendFromSummaryWithModel] generated_text:", JSON.stringify(text));
+    console.log("[recommendFromSummaryWithModel] parsed:", parsed);
+
+    return parsed;
+
+    // return parseRecommendationLines(text);
 }
 
 export function summarizeExtractive(text: string, maxSentences = 5): string {
