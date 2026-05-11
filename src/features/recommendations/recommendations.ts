@@ -14,29 +14,43 @@ function runIdle(): Promise<void> {
 
 export function mountRecommendations(slot: HTMLElement, store: Store) {
     const statusEl = document.createElement("div");
-    statusEl.style.marginBottom = "8px";
+    statusEl.className = "lr-recommendations-status";
 
-    const list = document.createElement("ul");
-    list.style.margin = "0";
-    list.style.paddingLeft = "18px";
+    const list = document.createElement("div");
+    list.className = "lr-recommendations-list";
 
     slot.replaceChildren(statusEl, list);
 
     const unsub = store.subscribe((state) => {
         const items = state.recommendations ?? [];
-        list.innerHTML = "";
+
+        slot.setAttribute("aria-busy", state.pageLoading ? "true" : "false");
+        list.replaceChildren();
+
         if (items.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = state.pageLoading
-                ? "Loading…"
-                : "No recommendations yet.";
-            list.appendChild(li);
+            const emptyEl = document.createElement("div");
+            emptyEl.className = "lr-recommendations-empty";
+            emptyEl.textContent = state.pageLoading
+                ? "Loading page..."
+                : "Recommendations will appear after the summary.";
+            list.appendChild(emptyEl);
             return;
         }
-        for (const x of items) {
-            const li = document.createElement("li");
-            li.textContent = x;
-            list.appendChild(li);
+
+        for (const item of items) {
+            const row = document.createElement("div");
+            row.className = "lr-recommendation-item";
+
+            const icon = document.createElement("span");
+            icon.className = "lr-recommendation-icon";
+            icon.textContent = getRecommendationIcon(item);
+
+            const text = document.createElement("span");
+            text.className = "lr-recommendation-text";
+            text.textContent = item;
+
+            row.append(icon, text);
+            list.appendChild(row);
         }
     });
 
@@ -64,4 +78,10 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
     }
 
     return { unsub, generateFrom };
+}
+
+function getRecommendationIcon(item: string): string {
+    if (item.startsWith("Try searching:")) return "⌕";
+    if (item.startsWith("Compare:")) return "⇄";
+    return "•";
 }

@@ -162,12 +162,9 @@ export function mountShell(root: HTMLElement): ShellRefs {
 
     // Slots
     const previewEl = document.createElement("div");
-    previewEl.style.whiteSpace = "pre-wrap";
-    previewEl.style.maxHeight = "220px";
-    previewEl.style.overflow = "auto";
-    previewEl.style.border = "1px solid #ddd";
-    previewEl.style.padding = "8px";
-    previewEl.style.borderRadius = "8px";
+    previewEl.className = "lr-preview-card";
+    previewEl.setAttribute("aria-live", "polite");
+    previewEl.setAttribute("aria-busy", "true");
     previewEl.textContent = "Loading...";
 
     const summaryEl = document.createElement("div");
@@ -177,9 +174,9 @@ export function mountShell(root: HTMLElement): ShellRefs {
     summaryEl.textContent = "Not generated yet.";
 
     const recommendationsEl = document.createElement("div");
-    recommendationsEl.style.border = "1px solid #ddd";
-    recommendationsEl.style.padding = "8px";
-    recommendationsEl.style.borderRadius = "8px";
+    recommendationsEl.className = "lr-recommendations-card";
+    recommendationsEl.setAttribute("aria-live", "polite");
+    recommendationsEl.setAttribute("aria-busy", "false");
     recommendationsEl.textContent = "Recommendations will appear here.";
 
     const runtimeEl = document.createElement("div");
