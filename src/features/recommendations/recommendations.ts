@@ -1,5 +1,6 @@
 import type { Store } from "../../core/types";
 import { extractTopKeywords } from "./keywords";
+import { createLoadingState } from "../../ui/loading";
 
 function runIdle(): Promise<void> {
     return new Promise((resolve) => {
@@ -22,6 +23,10 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
     slot.replaceChildren(statusEl, list);
 
     const unsub = store.subscribe((state) => {
+        if (state.recommendationsLoading) {
+            list.replaceChildren(createLoadingState("Generating recommendations..."));
+            return;
+        }
         const items = state.recommendations ?? [];
 
         slot.setAttribute("aria-busy", state.pageLoading ? "true" : "false");
@@ -55,26 +60,20 @@ export function mountRecommendations(slot: HTMLElement, store: Store) {
     });
 
     async function generateFrom(text: string) {
-        statusEl.textContent = "Generating recommendations...";
+        await runIdle();
 
-        try {
-            await runIdle();
+        const keywords = extractTopKeywords(text, 8);
+        const recommendations = [
+            ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
+            ...(keywords.length >= 2
+                ? [`Try searching: "${keywords[0]} ${keywords[1]}"`]
+                : []),
+            ...(keywords.length >= 3
+                ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`]
+                : []),
+        ];
 
-            const keywords = extractTopKeywords(text, 8);
-            const recommendations = [
-                ...keywords.slice(0, 5).map((k) => `Related topic: ${k}`),
-                ...(keywords.length >= 2
-                    ? [`Try searching: "${keywords[0]} ${keywords[1]}"`]
-                    : []),
-                ...(keywords.length >= 3
-                    ? [`Compare: "${keywords[0]} vs ${keywords[2]}"`]
-                    : []),
-            ];
-
-            return recommendations;
-        } finally {
-            statusEl.textContent = "";
-        }
+        return recommendations;
     }
 
     return { unsub, generateFrom };

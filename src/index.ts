@@ -21,6 +21,7 @@ const store = createStore<AppState>({
     pageLoading: true,
     summaryLoading: false,
     recommendations: [],
+    recommendationsLoading: false
 });
 
 const shell = mountShell(root);

@@ -29,13 +29,14 @@ export function createAppController({
                 summaryMeta: result.meta,
                 summaryLoading: false,
                 runtime: prev.runtime && result.runtime
-                    ? { 
-                        ...prev.runtime, 
+                    ? {
+                        ...prev.runtime,
                         ...result.runtime,
                         notes: [
                             ...(prev.runtime.notes ?? []),
                             ...(result.runtime.notes ?? [])
-                        ]}
+                        ]
+                    }
                     : prev.runtime,
             }));
         } catch (error) {
@@ -57,6 +58,7 @@ export function createAppController({
             summary: undefined,
             summaryMeta: undefined,
             recommendations: [],
+            recommendationsLoading: false,
             error: undefined
         });
     }
@@ -90,7 +92,7 @@ export function createAppController({
                 });
                 return;
             }
-            
+
             await runSummary(page.text);
 
             if (myRun !== runId) return;
@@ -99,6 +101,7 @@ export function createAppController({
                 if (myRun !== runId) return;
 
                 try {
+                    store.set({ recommendationsLoading: true });
                     const recommendations = await getRecommendations();
 
                     if (myRun !== runId) return;
@@ -107,11 +110,16 @@ export function createAppController({
 
                     if (myRun !== runId) return;
 
-                    store.set({ recommendations: items });
+                    store.set({
+                        recommendations: items,
+                        recommendationsLoading: false,
+                    });
+
                 } catch (error) {
                     if (myRun !== runId) return;
 
                     store.set({
+                        recommendationsLoading: false,
                         error:
                             error instanceof Error
                                 ? error.message

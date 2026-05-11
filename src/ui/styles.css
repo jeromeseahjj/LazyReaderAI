@@ -70,6 +70,46 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.50);
 }
 
+/** Loading Spinner **/
+.lr-loading {
+    min-height: 86px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--lr-muted, rgba(226, 232, 240, 0.72));
+    text-align: center;
+}
+
+.lr-spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 3px solid rgba(255, 255, 255, 0.18);
+    border-top-color: var(--lr-accent, #c084fc);
+    animation: lr-spin 780ms linear infinite;
+}
+
+.lr-loading-text {
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+@keyframes lr-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lr-spinner {
+        animation: none;
+        border-top-color: var(--lr-accent, #c084fc);
+    }
+}
+
 /** RUNTIME CARD **/
 .lr-runtime-card {
     display: flex;

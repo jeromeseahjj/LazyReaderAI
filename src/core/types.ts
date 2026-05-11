@@ -10,6 +10,7 @@ export type AppState = {
     runtime?: RuntimeStatus | undefined;
     summary?: string | undefined;
     summaryMeta?: SummaryMeta | undefined;
+    recommendationsLoading: boolean;
     recommendations: string[];
 };
 

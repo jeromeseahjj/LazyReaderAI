@@ -1,4 +1,5 @@
 import type { Store } from "../../core/types";
+import { createLoadingState } from "../../ui/loading";
 
 const PREVIEW_CHAR_LIMIT = 2000;
 
@@ -58,7 +59,9 @@ export function mountPreview(
         if (state.pageLoading) {
             setMeta("Loading page text...", "muted");
             bodyEl.dataset.state = "loading";
-            bodyEl.textContent = "Extracting readable text from the current page...";
+            bodyEl.replaceChildren(
+                createLoadingState("Extracting readable text from the current page...")
+            );
             return;
         }
 
@@ -96,8 +99,10 @@ export function mountPreview(
 
         setMeta(`${page.wordCount} words extracted · ${qualityLabel}`, page.quality === "weak" ? "warning" : "info");
 
-        bodyEl.textContent = isTruncated
-            ? `${preview}\n\n[Preview truncated to first ${PREVIEW_CHAR_LIMIT.toLocaleString()} characters...]`
-            : preview;
+        bodyEl.replaceChildren(
+            isTruncated
+                ? `${preview}\n\n[Preview truncated to first ${PREVIEW_CHAR_LIMIT.toLocaleString()} characters...]`
+                : preview
+        );
     });
 }

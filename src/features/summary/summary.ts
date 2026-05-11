@@ -1,5 +1,6 @@
 import type { Store, SummaryResult, WorkerResponse } from "../../core/types";
 import { summarizeExtractive } from "./summarizer";
+import { createLoadingState } from "../../ui/loading";
 
 let summaryWorker: Worker | null = null;
 
@@ -80,18 +81,17 @@ export function mountSummary(slot: HTMLElement, store: Store) {
 
         if (state.summaryLoading) {
             bodyEl.dataset.state = "loading";
-            bodyEl.textContent = "Generating summary...";
+            bodyEl.replaceChildren(createLoadingState("Generating summary..."));
             return;
         }
 
         if (!state.summary) {
             bodyEl.dataset.state = "empty";
-            bodyEl.textContent = "Not generated yet.";
+            bodyEl.replaceChildren("Not generated yet.");
             return;
         }
 
-        // summary.ts
-        bodyEl.textContent = state.summary.trim();
+        bodyEl.replaceChildren(state.summary.trim());
 
         const meta = state.summaryMeta;
         if (!meta) return;

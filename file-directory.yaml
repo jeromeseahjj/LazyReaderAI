@@ -6,6 +6,7 @@ src:
   ui:
     shell.ts: root node containing all the component ui.
     theme.ts: theme file containing all the theme specific css changes.
+    loading.ts: loading spinner across all cards.
     styles.css: fixed/core css changes used app wide.
   features:
     runtime:
