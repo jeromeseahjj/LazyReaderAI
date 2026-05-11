@@ -1,3 +1,5 @@
+import "./ui/styles.css";
+
 import { createAppController } from "./controller";
 import { createStore } from "./core/store";
 import type { AppState, PagePayload, RecommendationsController } from "./core/types";

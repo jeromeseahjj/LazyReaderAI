@@ -55,60 +55,77 @@ function runWorkerSummary(text: string): Promise<SummaryResult> {
 }
 
 export function mountSummary(slot: HTMLElement, store: Store) {
-    // render-only subscription (shows whatever store has)
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "lr-summary-body";
+
+    const metaEl = document.createElement("div");
+    metaEl.className = "lr-summary-meta";
+
+    slot.replaceChildren(bodyEl, metaEl);
+
+    function addChip(label: string, tone: "good" | "warning" | "info" | "muted" = "muted") {
+        const chip = document.createElement("span");
+        chip.className = "lr-summary-chip";
+        chip.dataset.tone = tone;
+        chip.textContent = label;
+        metaEl.appendChild(chip);
+    }
+
     const unsub = store.subscribe((state) => {
+        slot.setAttribute("aria-busy", state.summaryLoading ? "true" : "false");
+
+        bodyEl.dataset.state = "";
+        metaEl.replaceChildren();
+        metaEl.hidden = true;
+
         if (state.summaryLoading) {
-            slot.textContent = "Generating summary...";
+            bodyEl.dataset.state = "loading";
+            bodyEl.textContent = "Generating summary...";
             return;
         }
+
         if (!state.summary) {
-            slot.textContent = "Not generated yet.";
+            bodyEl.dataset.state = "empty";
+            bodyEl.textContent = "Not generated yet.";
             return;
         }
+
+        // summary.ts
+        bodyEl.textContent = state.summary.trim();
 
         const meta = state.summaryMeta;
+        if (!meta) return;
 
-        if (!meta) {
-            slot.textContent = state.summary;
-            return;
-        }
+        metaEl.hidden = false;
 
         const generatedAt = new Date(meta.generatedAt).toLocaleTimeString();
-        console.log("[summary.mountSummary] generatedAt", generatedAt);
-        
-        const generatedWith =
-            meta.source === "model"
-                ? `Generated with ${meta.backend ?? "unknown backend"}`
-                : `Generated with extractive fallback`;
 
-        const fallbackText = meta.fallbackUsed
-            ? "Fallback used: yes"
-            : "Fallback used: no"
+        if (meta.source === "model") {
+            addChip(`Model · ${meta.backend ?? "unknown"}`, "info");
+        } else {
+            addChip("Extractive fallback", "warning");
+        }
 
-        slot.textContent = [
-            state.summary,
-            "",
-            generatedWith,
-            fallbackText,
-            `Words analyzed: ${meta.inputWordCount}`,
-            `Last updated: ${generatedAt}`
-        ].join("\n");
+        addChip(
+            meta.fallbackUsed ? "Fallback used" : "No fallback",
+            meta.fallbackUsed ? "warning" : "good",
+        );
 
+        addChip(`${meta.inputWordCount} words`, "muted");
+        addChip(`Updated ${generatedAt}`, "muted");
     });
 
     async function generateFrom(text: string): Promise<SummaryResult> {
-        // Let the browser paint "Generating…" before heavy work
-        // slot.textContent = "Generating summary...";
         try {
             console.log("[summary.generateFrom] Entry, generating using worker");
-            // Load 1 frame first, to let user see the "Generating summary...".
-            // This promise will resolve and move on with code execution on the next frame.
-            // And it doesn't matter how fast the 2nd frame comes, because the loading message rendered.
+
             await new Promise<void>((r) => requestAnimationFrame(() => r()));
-            const summary = await runWorkerSummary(text)
+
+            const summary = await runWorkerSummary(text);
             return summary;
         } catch (error) {
             console.log("[summary.generateFrom] Error, fallback to basic nlp", error);
+
             return {
                 summary: summarizeExtractive(text, 5) || "...",
                 runtime: undefined,
@@ -118,8 +135,8 @@ export function mountSummary(slot: HTMLElement, store: Store) {
                     modelName: undefined,
                     fallbackUsed: true,
                     generatedAt: Date.now(),
-                    inputWordCount: countWords(text)
-                }
+                    inputWordCount: countWords(text),
+                },
             };
         }
     }

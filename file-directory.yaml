@@ -5,6 +5,8 @@ src:
     store: self-made light weight publisher/subscriber store.
   ui:
     shell.ts: root node containing all the component ui.
+    theme.ts: theme file containing all the theme specific css changes.
+    styles.css: fixed/core css changes used app wide.
   features:
     runtime:
       runtime.ts: runtime class with mount ui
@@ -23,4 +25,5 @@ src:
     background.ts: chrome background listener for chrome events
   shared:
     utils.ts: shared utility functions
+  vite-env.d.ts: just a file to make vite recognise css as imports.
   index.ts: assembler/orchestrator

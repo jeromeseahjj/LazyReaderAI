@@ -189,5 +189,5 @@ export async function summarizeWithModel(text: string): Promise<string> {
     });
 
     const first = Array.isArray(result) ? result[0] : result;
-    return first?.summary_text ?? "";
+    return (first?.summary_text ?? "").trim();
 }
